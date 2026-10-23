@@ -23,6 +23,12 @@
     "name": "Sebastian Kristo",
     "email": "sebastian@kristo.no"
   },
+  "source": "https://github.com/SebastianKristo/homey-homeassistant-mac",
+  "homepage": "https://github.com/SebastianKristo/homey-homeassistant-mac",
+  "support": "https://github.com/SebastianKristo/homey-homeassistant-mac/issues",
+  "bugs": {
+    "url": "https://github.com/SebastianKristo/homey-homeassistant-mac/issues"
+  },
   "images": {
     "small": "/assets/images/small.png",
     "large": "/assets/images/large.png",
