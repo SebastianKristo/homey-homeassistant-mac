@@ -2,10 +2,9 @@ name: Build MacBridge DMG
 
 on:
   push:
-    paths: ["mac-app/**", ".github/workflows/mac-app.yml"]
+    branches: ["**"]
     tags: ["v*"]
   pull_request:
-    paths: ["mac-app/**", ".github/workflows/mac-app.yml"]
   workflow_dispatch:
 
 permissions:
