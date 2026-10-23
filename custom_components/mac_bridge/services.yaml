@@ -1,0 +1,36 @@
+send_command:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: mac_bridge
+    command:
+      required: true
+      example: say
+      selector:
+        select:
+          options:
+            - play_pause
+            - play
+            - pause
+            - next
+            - previous
+            - set_volume
+            - volume_up
+            - volume_down
+            - mute
+            - unmute
+            - sleep
+            - display_sleep
+            - wake_display
+            - lock
+            - restart
+            - shutdown
+            - say
+            - notify
+            - open_url
+    value:
+      example: "Hello from Home Assistant"
+      selector:
+        object:

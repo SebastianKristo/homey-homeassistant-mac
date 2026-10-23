@@ -1,0 +1,14 @@
+{
+  "domain": "mac_bridge",
+  "name": "Mac Bridge",
+  "codeowners": ["@sebastiankristo"],
+  "config_flow": true,
+  "dependencies": ["webhook"],
+  "documentation": "https://github.com/sebastiankristo/homey-homeassistant-mac",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/sebastiankristo/homey-homeassistant-mac/issues",
+  "requirements": [],
+  "version": "1.0.0",
+  "zeroconf": ["_macbridge._tcp.local."]
+}
