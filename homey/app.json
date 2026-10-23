@@ -1,7 +1,7 @@
 {
   "id": "no.kristo.macbridge",
   "version": "1.0.0",
-  "compatibility": ">=12.0.0",
+  "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": [
     "local"
@@ -25,7 +25,8 @@
   },
   "images": {
     "small": "/assets/images/small.png",
-    "large": "/assets/images/large.png"
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
   },
   "discovery": {
     "macbridge": {
@@ -116,9 +117,6 @@
       },
       "getable": true,
       "setable": false,
-      "units": {
-        "en": ""
-      },
       "insights": true,
       "decimals": 2,
       "uiComponent": "sensor",
@@ -152,7 +150,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -170,7 +168,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -188,7 +186,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -206,7 +204,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -224,7 +222,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -242,7 +240,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -260,7 +258,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -278,7 +276,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           },
           {
             "type": "text",
@@ -304,7 +302,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           },
           {
             "type": "text",
@@ -330,7 +328,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           },
           {
             "type": "text",
@@ -369,7 +367,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           },
           {
             "type": "number",
@@ -393,7 +391,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       },
@@ -407,7 +405,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac"
+            "filter": "driver_id=mac_mini|macbook_pro"
           }
         ]
       }
@@ -415,10 +413,105 @@
   },
   "drivers": [
     {
-      "id": "mac",
+      "id": "mac_mini",
       "name": {
-        "en": "Mac",
-        "no": "Mac"
+        "en": "Mac mini",
+        "no": "Mac mini"
+      },
+      "class": "speaker",
+      "capabilities": [
+        "onoff",
+        "speaker_playing",
+        "speaker_prev",
+        "speaker_next",
+        "speaker_track",
+        "speaker_artist",
+        "speaker_album",
+        "volume_set",
+        "volume_mute",
+        "measure_cpu",
+        "measure_memory",
+        "measure_disk",
+        "measure_disk_free",
+        "measure_load",
+        "mac_thermal_state"
+      ],
+      "capabilitiesOptions": {
+        "onoff": {
+          "title": {
+            "en": "Awake",
+            "no": "Våken"
+          }
+        }
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "discovery": "macbridge",
+      "images": {
+        "small": "/drivers/mac_mini/assets/images/small.png",
+        "large": "/drivers/mac_mini/assets/images/large.png",
+        "xlarge": "/drivers/mac_mini/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "repair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "settings": [
+        {
+          "id": "host",
+          "type": "text",
+          "label": {
+            "en": "Host",
+            "no": "Vert"
+          },
+          "value": ""
+        },
+        {
+          "id": "port",
+          "type": "number",
+          "label": {
+            "en": "Port",
+            "no": "Port"
+          },
+          "value": 8765
+        },
+        {
+          "id": "token",
+          "type": "password",
+          "label": {
+            "en": "Token",
+            "no": "Token"
+          },
+          "value": ""
+        },
+        {
+          "id": "interval",
+          "type": "number",
+          "label": {
+            "en": "Polling interval (s)",
+            "no": "Oppdateringsintervall (s)"
+          },
+          "value": 10,
+          "min": 2,
+          "max": 600
+        }
+      ]
+    },
+    {
+      "id": "macbook_pro",
+      "name": {
+        "en": "MacBook Pro",
+        "no": "MacBook Pro"
       },
       "class": "speaker",
       "capabilities": [
@@ -460,8 +553,9 @@
       ],
       "discovery": "macbridge",
       "images": {
-        "small": "/drivers/mac/assets/images/small.png",
-        "large": "/drivers/mac/assets/images/large.png"
+        "small": "/drivers/macbook_pro/assets/images/small.png",
+        "large": "/drivers/macbook_pro/assets/images/large.png",
+        "xlarge": "/drivers/macbook_pro/assets/images/xlarge.png"
       },
       "pair": [
         {

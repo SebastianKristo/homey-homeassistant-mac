@@ -27,6 +27,10 @@ cp -r build/MacBridge.app /Applications/
 open /Applications/MacBridge.app
 ```
 
+**Eller som DMG:** `./scripts/make-dmg.sh` lager `build/MacBridge.dmg`. GitHub Actions bygger også DMG-en automatisk (under *Actions → Build MacBridge DMG → Artifacts*, og på releaser for `v*`-tagger).
+
+Appen er ad-hoc-signert, ikke notarisert. Første gang: høyreklikk appen → **Åpne**, eller kjør `xattr -dr com.apple.quarantine /Applications/MacBridge.app`.
+
 - Et skjerm-ikon dukker opp i menylinjen. Velg **Copy token** – det trengs i HA/Homey.
 - Velg **Request permissions** og godta Automation (System Events, Music, Spotify) og Tilgjengelighet (for medietaster og lås skjerm).
 - Legg appen til i *Systeminnstillinger → Generelt → Påloggingsobjekter* så den starter automatisk.
@@ -87,13 +91,17 @@ cd homey
 homey app install      # eller: homey app run
 ```
 
-Legg til enhet: *Mac Bridge → Mac*. Oppdagede Macer vises i listen; lim inn token.
+Legg til enhet: *Mac Bridge → Mac mini* eller *MacBook Pro* (hver har sitt eget ikon). Oppdagede Macer vises i listen; lim inn token.
 
 Enheten er en høyttaler med play/pause, neste/forrige, volum, demp, spor/artist/album, «Våken» (av = dvale), samt CPU, minne, disk, ledig disk, load, temperaturstatus og batteri (kun bærbare).
 
 Flows:
 - **Handlinger**: dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, si tekst, vis varsel, åpne URL
 - **Triggere**: CPU gikk over X %, Macen gikk offline, Macen kom online (+ alle standard kapabilitet-triggere)
+
+## Ikoner
+
+Alle ikoner genereres med `python3 tools/generate_icons.py` (krever Pillow): app-ikon (`.icns`), DMG-bakgrunn, Homey-bilder og Home Assistant-ikon i `custom_components/mac_bridge/brand/`. Nyere Home Assistant-versjoner viser `brand/`-ikonene for egne integrasjoner; i eldre versjoner krever det at ikonet legges inn i home-assistant/brands.
 
 ## Sikkerhet
 

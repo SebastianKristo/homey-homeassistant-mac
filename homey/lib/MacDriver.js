@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const MacBridgeClient = require('../../lib/MacBridgeClient');
+const MacBridgeClient = require('./MacBridgeClient');
 
 class MacDriver extends Homey.Driver {
   async onInit() {
