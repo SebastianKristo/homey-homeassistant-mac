@@ -13,7 +13,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .api import MacBridgeAuthError, MacBridgeClient, MacBridgeError
-from .const import CONF_SCAN_INTERVAL, DEFAULT_PORT, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_DEVICE, CONF_SCAN_INTERVAL, DEFAULT_PORT, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 
 class MacBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -42,10 +42,14 @@ class MacBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
             except MacBridgeError:
                 errors["base"] = "cannot_connect"
             else:
-                device = status["device"]
-                await self.async_set_unique_id(device["serial"])
-                self._abort_if_unique_id_configured(updates=user_input)
-                return self.async_create_entry(title=device["name"], data=user_input)
+                device = status.get("device") or {}
+                unique_id = device.get("id")
+                if not unique_id:
+                    errors["base"] = "cannot_connect"
+                else:
+                    await self.async_set_unique_id(unique_id)
+                    self._abort_if_unique_id_configured(updates=user_input)
+                    return self.async_create_entry(title=device.get("name", "Mac"), data=user_input)
 
         schema = vol.Schema(
             {
@@ -62,12 +66,18 @@ class MacBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_zeroconf(self, discovery_info: ZeroconfServiceInfo) -> ConfigFlowResult:
-        serial = discovery_info.properties.get("id")
-        if serial:
-            await self.async_set_unique_id(serial)
+        device_id = discovery_info.properties.get("id")
+        if device_id:
+            await self.async_set_unique_id(device_id)
             self._abort_if_unique_id_configured(
                 updates={CONF_HOST: discovery_info.host, CONF_PORT: discovery_info.port}
             )
+        # Entries created by version 1.0 use the hardware serial as unique id; match those by
+        # their remembered device id or host instead of offering the same Mac again.
+        for entry in self._async_current_entries(include_ignore=False):
+            known_id = (entry.data.get(CONF_DEVICE) or {}).get("id")
+            if (device_id and known_id == device_id) or entry.data.get(CONF_HOST) == discovery_info.host:
+                return self.async_abort(reason="already_configured")
         self._host = discovery_info.host
         self._port = discovery_info.port or DEFAULT_PORT
         self._name = discovery_info.name.split(".")[0]

@@ -1,49 +1,113 @@
 import Foundation
+import Security
 
-/// Persistent settings stored in UserDefaults.
+/// Persistent settings. Non-secret settings live in UserDefaults; the token lives in the Keychain.
 final class Config {
     static let shared = Config()
     private let defaults = UserDefaults.standard
+    private let lock = NSLock()
+    private var cachedToken: String?
 
     var port: UInt16 {
         get { UInt16(defaults.integer(forKey: "port")).nonZero ?? 8765 }
         set { defaults.set(Int(newValue), forKey: "port") }
     }
 
-    /// Shared secret used by Home Assistant / Homey (Authorization: Bearer <token>).
+    /// Shared secret used by Home Assistant / Homey to sign requests. Never sent over the network.
     var token: String {
-        if let t = defaults.string(forKey: "token"), !t.isEmpty { return t }
-        let t = Config.generateToken()
-        defaults.set(t, forKey: "token")
-        return t
+        lock.lock(); defer { lock.unlock() }
+        if let cachedToken { return cachedToken }
+        // Migrate tokens stored in UserDefaults by version 1.0.0.
+        if let legacy = defaults.string(forKey: "token"), !legacy.isEmpty {
+            if Keychain.write(legacy) { defaults.removeObject(forKey: "token") }
+            cachedToken = legacy
+            return legacy
+        }
+        if let stored = Keychain.read(), !stored.isEmpty {
+            cachedToken = stored
+            return stored
+        }
+        let fresh = Config.generateToken()
+        _ = Keychain.write(fresh)
+        cachedToken = fresh
+        return fresh
     }
 
     func regenerateToken() {
-        defaults.set(Config.generateToken(), forKey: "token")
+        let fresh = Config.generateToken()
+        lock.lock(); defer { lock.unlock() }
+        _ = Keychain.write(fresh)
+        cachedToken = fresh
     }
 
-    /// Optional URLs that receive a POST with the full status JSON on every change/interval
-    /// (e.g. a Home Assistant webhook or the Homey app webhook).
+    /// Optional http(s) URLs that receive a signed POST with the status JSON on every interval
+    /// (e.g. a Home Assistant webhook).
     var pushURLs: [String] {
-        get { defaults.stringArray(forKey: "pushURLs") ?? [] }
-        set { defaults.set(newValue, forKey: "pushURLs") }
+        get { (defaults.stringArray(forKey: "pushURLs") ?? []).filter(Config.isAllowedPushURL) }
+        set { defaults.set(newValue.filter(Config.isAllowedPushURL), forKey: "pushURLs") }
+    }
+
+    static func isAllowedPushURL(_ string: String) -> Bool {
+        guard let url = URL(string: string), let scheme = url.scheme?.lowercased(), url.host != nil else { return false }
+        return scheme == "http" || scheme == "https"
     }
 
     var pushInterval: TimeInterval {
-        get { let v = defaults.double(forKey: "pushInterval"); return v > 0 ? v : 10 }
+        get { let v = defaults.double(forKey: "pushInterval"); return v > 0 ? max(v, 2) : 10 }
         set { defaults.set(newValue, forKey: "pushInterval") }
     }
 
-    /// Restart/shutdown can be disabled for safety.
+    /// Restart/shutdown can be turned off from the menu bar.
     var allowPowerCommands: Bool {
         get { defaults.object(forKey: "allowPowerCommands") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "allowPowerCommands") }
     }
 
+    /// Speech and notifications can be turned off from the menu bar.
+    var allowSpeechAndNotifications: Bool {
+        get { defaults.object(forKey: "allowSpeechAndNotifications") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "allowSpeechAndNotifications") }
+    }
+
     private static func generateToken() -> String {
-        var bytes = [UInt8](repeating: 0, count: 24)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        var bytes = [UInt8](repeating: 0, count: 32)
+        let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        precondition(status == errSecSuccess, "no secure random numbers available")
         return bytes.map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+/// Stores the token as a generic password, readable only on this Mac after first unlock.
+enum Keychain {
+    private static let service = "MacBridge"
+    private static let account = "api-token"
+
+    private static var query: [String: Any] {
+        [kSecClass as String: kSecClassGenericPassword,
+         kSecAttrService as String: service,
+         kSecAttrAccount as String: account]
+    }
+
+    static func read() -> String? {
+        var q = query
+        q[kSecReturnData as String] = true
+        q[kSecMatchLimit as String] = kSecMatchLimitOne
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(q as CFDictionary, &item) == errSecSuccess, let data = item as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    @discardableResult
+    static func write(_ value: String) -> Bool {
+        let data = Data(value.utf8)
+        let update = SecItemUpdate(query as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if update == errSecSuccess { return true }
+        var add = query
+        add[kSecValueData as String] = data
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(add as CFDictionary, nil)
+        if status != errSecSuccess { NSLog("MacBridge: could not store token in Keychain (\(status))") }
+        return status == errSecSuccess
     }
 }
 
