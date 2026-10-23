@@ -27,6 +27,10 @@ cp -r build/MacBridge.app /Applications/
 open /Applications/MacBridge.app
 ```
 
+**Eller som DMG:** `./scripts/make-dmg.sh` lager `build/MacBridge.dmg`. GitHub Actions bygger også DMG-en automatisk (under *Actions → Build MacBridge DMG → Artifacts*, og på releaser for `v*`-tagger).
+
+Appen er ad-hoc-signert, ikke notarisert. Første gang: høyreklikk appen → **Åpne**, eller kjør `xattr -dr com.apple.quarantine /Applications/MacBridge.app`.
+
 - Et skjerm-ikon dukker opp i menylinjen. Velg **Copy token** – det trengs i HA/Homey.
 - Velg **Request permissions** og godta Automation (System Events, Music, Spotify) og Tilgjengelighet (for medietaster og lås skjerm).
 - Legg appen til i *Systeminnstillinger → Generelt → Påloggingsobjekter* så den starter automatisk.
