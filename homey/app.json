@@ -1,7 +1,7 @@
 {
   "id": "no.kristo.macbridge",
   "version": "1.0.0",
-  "compatibility": ">=12.0.0",
+  "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": [
     "local"
@@ -116,9 +116,6 @@
       },
       "getable": true,
       "setable": false,
-      "units": {
-        "en": ""
-      },
       "insights": true,
       "decimals": 2,
       "uiComponent": "sensor",
