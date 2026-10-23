@@ -10,6 +10,7 @@ from . import MacBridgeConfigEntry
 from .entity import MacBridgeEntity
 
 BUTTONS: tuple[ButtonEntityDescription, ...] = (
+    ButtonEntityDescription(key="wake", translation_key="wake", icon="mdi:power-on"),
     ButtonEntityDescription(key="sleep", translation_key="sleep", icon="mdi:sleep"),
     ButtonEntityDescription(key="display_sleep", translation_key="display_sleep", icon="mdi:monitor-off"),
     ButtonEntityDescription(key="wake_display", translation_key="wake_display", icon="mdi:monitor"),
@@ -36,7 +37,17 @@ class MacButton(MacBridgeEntity, ButtonEntity):
 
     @property
     def available(self) -> bool:
+        if self.entity_description.key == "wake":
+            # Wake-on-LAN works while the Mac sleeps.
+            return self.online or self.coordinator.mac_address is not None
+        if self.entity_description.key in ("restart", "shutdown") and not self.coordinator.data.get(
+            "power_commands", True
+        ):
+            return False  # turned off in the MacBridge menu
         return super().available and self.online
 
     async def async_press(self) -> None:
-        await self.coordinator.async_command(self.entity_description.key)
+        if self.entity_description.key == "wake":
+            await self.coordinator.async_wake()
+        else:
+            await self.coordinator.async_command(self.entity_description.key)

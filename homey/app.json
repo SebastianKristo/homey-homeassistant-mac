@@ -1,6 +1,6 @@
 {
   "id": "no.kristo.macbridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": [
@@ -137,6 +137,24 @@
   "flow": {
     "actions": [
       {
+        "id": "wake",
+        "title": {
+          "en": "Wake the Mac (Wake-on-LAN)",
+          "no": "Vekk Macen (Wake-on-LAN)"
+        },
+        "titleFormatted": {
+          "en": "Wake the Mac (Wake-on-LAN)",
+          "no": "Vekk Macen (Wake-on-LAN)"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro"
+          }
+        ]
+      },
+      {
         "id": "sleep",
         "title": {
           "en": "Put the Mac to sleep",
@@ -263,6 +281,42 @@
         ]
       },
       {
+        "id": "next",
+        "title": {
+          "en": "Next track",
+          "no": "Neste spor"
+        },
+        "titleFormatted": {
+          "en": "Next track",
+          "no": "Neste spor"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro"
+          }
+        ]
+      },
+      {
+        "id": "previous",
+        "title": {
+          "en": "Previous track",
+          "no": "Forrige spor"
+        },
+        "titleFormatted": {
+          "en": "Previous track",
+          "no": "Forrige spor"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro"
+          }
+        ]
+      },
+      {
         "id": "say",
         "title": {
           "en": "Speak text",
@@ -310,32 +364,6 @@
             "title": {
               "en": "Message",
               "no": "Melding"
-            }
-          }
-        ]
-      },
-      {
-        "id": "open_url",
-        "title": {
-          "en": "Open URL",
-          "no": "Åpne URL"
-        },
-        "titleFormatted": {
-          "en": "Open URL [[value]]",
-          "no": "Åpne URL [[value]]"
-        },
-        "args": [
-          {
-            "type": "device",
-            "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
-          },
-          {
-            "type": "text",
-            "name": "value",
-            "title": {
-              "en": "URL",
-              "no": "URL"
             }
           }
         ]
@@ -434,7 +462,11 @@
         "measure_disk",
         "measure_disk_free",
         "measure_load",
-        "mac_thermal_state"
+        "mac_thermal_state",
+        "button.wake",
+        "button.sleep",
+        "button.restart",
+        "button.shutdown"
       ],
       "capabilitiesOptions": {
         "onoff": {
@@ -442,6 +474,34 @@
             "en": "Awake",
             "no": "Våken"
           }
+        },
+        "button.wake": {
+          "title": {
+            "en": "Wake",
+            "no": "Vekk"
+          },
+          "maintenanceAction": false
+        },
+        "button.sleep": {
+          "title": {
+            "en": "Sleep",
+            "no": "Dvale"
+          },
+          "maintenanceAction": false
+        },
+        "button.restart": {
+          "title": {
+            "en": "Restart",
+            "no": "Start på nytt"
+          },
+          "maintenanceAction": false
+        },
+        "button.shutdown": {
+          "title": {
+            "en": "Shut down",
+            "no": "Slå av"
+          },
+          "maintenanceAction": false
         }
       },
       "platforms": [
@@ -530,7 +590,11 @@
         "measure_disk_free",
         "measure_load",
         "mac_thermal_state",
-        "measure_battery"
+        "measure_battery",
+        "button.wake",
+        "button.sleep",
+        "button.restart",
+        "button.shutdown"
       ],
       "capabilitiesOptions": {
         "onoff": {
@@ -538,6 +602,34 @@
             "en": "Awake",
             "no": "Våken"
           }
+        },
+        "button.wake": {
+          "title": {
+            "en": "Wake",
+            "no": "Vekk"
+          },
+          "maintenanceAction": false
+        },
+        "button.sleep": {
+          "title": {
+            "en": "Sleep",
+            "no": "Dvale"
+          },
+          "maintenanceAction": false
+        },
+        "button.restart": {
+          "title": {
+            "en": "Restart",
+            "no": "Start på nytt"
+          },
+          "maintenanceAction": false
+        },
+        "button.shutdown": {
+          "title": {
+            "en": "Shut down",
+            "no": "Slå av"
+          },
+          "maintenanceAction": false
         }
       },
       "energy": {

@@ -10,11 +10,11 @@ Tre deler:
 
 ## Funksjoner
 
-- **Mediaspiller**: play/pause, neste/forrige, nå spilles (tittel, artist, album, posisjon) fra Music og Spotify. Andre spillere styres via systemets medietaster.
+- **Mediaspiller**: play/pause, neste/forrige, nå spilles (tittel, artist, album, posisjon, omslag fra Spotify) fra Musikk/Music og Spotify. Andre spillere kan styres via systemets medietaster (valgfri tillatelse).
 - **Volum**: sett nivå, opp/ned, demp.
-- **Strøm**: dvale, skjerm av/på, lås skjerm, restart, slå av (restart/slå av kan skrus av i menyen).
+- **Strøm**: vekk (Wake-on-LAN + skjerm på), dvale, skjerm av, lås skjerm, restart, slå av (restart/slå av kan skrus av i menyen).
 - **Statistikk**: CPU-bruk, minne (% og GB), disk (% og ledig GB), load, batteri og lading, temperaturstatus, oppetid/sist startet.
-- **Ekstra**: `say` (tekst-til-tale), `notify` (macOS-varsel), `open_url`.
+- **Ekstra**: `say` (tekst-til-tale) og `notify` (macOS-varsel). Kan skrus av i menyen.
 
 ## 1. Mac-appen
 
@@ -32,33 +32,46 @@ open /Applications/MacBridge.app
 Appen er ad-hoc-signert, ikke notarisert. Første gang: høyreklikk appen → **Åpne**, eller kjør `xattr -dr com.apple.quarantine /Applications/MacBridge.app`.
 
 - Et skjerm-ikon dukker opp i menylinjen. Velg **Copy token** – det trengs i HA/Homey.
-- Velg **Request permissions** og godta Automation (System Events, Music, Spotify) og Tilgjengelighet (for medietaster og lås skjerm).
+- Start Musikk og/eller Spotify, velg **Request permissions** og godta at MacBridge kan styre dem (Automatisering). Første restart/slå av ber om lov til å styre «loginwindow».
+- Tilgjengelighet trengs **ikke**. Den er bare valgfri hvis du vil styre andre spillere (nettleser o.l.) med medietastene.
 - Legg appen til i *Systeminnstillinger → Generelt → Påloggingsobjekter* så den starter automatisk.
 - Standard port er `8765` (kan endres i menyen).
 
 ### API
 
-Alle kall unntatt `/api/ping` krever `Authorization: Bearer <token>`.
+Alle kall unntatt `/api/ping` må signeres. Tokenet sendes aldri over nettverket:
 
 ```
-GET  /api/ping
+X-MacBridge-Timestamp: <unix-sekunder>
+X-MacBridge-Nonce:     <16–64 tilfeldige hex-tegn, aldri gjenbrukt>
+X-MacBridge-Signature: hex(HMAC-SHA256(token, "MacBridge-v1\n<METODE>\n<sti>\n<timestamp>\n<nonce>\n<sha256-hex av body>"))
+```
+
+Svaret har `X-MacBridge-Signature: hex(HMAC-SHA256(token, "MacBridge-v1-response\n<nonce>\n<status>\n<sha256-hex av body>"))`, slik at klienten vet at svaret kommer fra riktig Mac.
+
+```
+GET  /api/ping      (kun {"ok": true}, ingen enhetsinfo)
 GET  /api/status
 POST /api/command   {"command": "set_volume", "value": 40}
 ```
 
-Kommandoer: `play_pause play pause next previous set_volume volume_up volume_down mute unmute set_mute sleep display_sleep wake_display lock restart shutdown say notify open_url`.
+Kommandoer (fast liste, alt annet avvises): `play_pause play pause next previous set_volume volume_up volume_down mute unmute set_mute sleep display_sleep wake wake_display lock restart shutdown say notify`.
 
 `notify` tar `{"title": "...", "message": "..."}` eller en streng.
 
+### Vekke Macen fra dvale
+
+En Mac i dvale svarer ikke på nettverket, så «Vekk» sender en Wake-on-LAN-pakke til Macen (MAC-adressen lærer HA/Homey når Macen er våken). Slå på *Systeminnstillinger → Energi → Vekk for nettverkstilgang*. Det fungerer best med kabel; på Wi-Fi avhenger det av ruteren.
+
 ### Push (valgfritt, for umiddelbare oppdateringer)
 
-I menyen **Push URLs** kan du legge inn URL-er som får status POST-et hvert 10. sekund (med token i `Authorization`). For Home Assistant:
+I menyen **Push URLs** kan du legge inn http/https-URL-er som får status POST-et hvert 10. sekund, signert med tokenet (samme skjema, `MacBridge-v1-push\n<timestamp>\n<nonce>\n<sha256-hex av body>`). For Home Assistant:
 
 ```
-http://<home-assistant>:8123/api/webhook/mac_bridge_<serienummer>
+http://<home-assistant>:8123/api/webhook/mac_bridge_<device-id>
 ```
 
-Serienummeret er det samme som enhetens serienummer i HA (Enhetsinfo). Uten push poller HA og Homey selv (standard hvert 10. sekund).
+`<device-id>` står i MacBridge-menyen (*Device ID*). Webhooken tar kun imot fra lokalt nettverk og bare signerte, ferske meldinger. Uten push poller HA og Homey selv (standard hvert 10. sekund).
 
 ## 2. Home Assistant
 
@@ -68,9 +81,9 @@ Serienummeret er det samme som enhetens serienummer i HA (Enhetsinfo). Uten push
 
 Du får:
 
-- `media_player.<mac>` – spiller, volum, demp, av = dvale, på = vekk skjerm
+- `media_player.<mac>` – spiller med tittel/artist/album/omslag, neste/forrige, volum, demp, av = dvale, på = vekk
 - `number.<mac>_volume` – volum-slider
-- `button.*` – dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, neste, forrige, demp
+- `button.*` – vekk (fungerer også når Macen sover), dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, neste, forrige, demp
 - `sensor.*` – CPU, minne, disk, load, batteri, temperaturstatus, sist startet, spilles nå
 - `binary_sensor.*` – online, lader
 - Tjeneste `mac_bridge.send_command`:
@@ -93,10 +106,10 @@ homey app install      # eller: homey app run
 
 Legg til enhet: *Mac Bridge → Mac mini* eller *MacBook Pro* (hver har sitt eget ikon). Oppdagede Macer vises i listen; lim inn token.
 
-Enheten er en høyttaler med play/pause, neste/forrige, volum, demp, spor/artist/album, «Våken» (av = dvale), samt CPU, minne, disk, ledig disk, load, temperaturstatus og batteri (kun bærbare).
+Enheten er en høyttaler med play/pause, neste/forrige, volum, demp, spor/artist/album, «Våken» (av = dvale, på = vekk), knappene **Vekk**, **Dvale**, **Start på nytt** og **Slå av**, samt CPU, minne, disk, ledig disk, load, temperaturstatus og batteri (kun bærbare).
 
 Flows:
-- **Handlinger**: dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, si tekst, vis varsel, åpne URL
+- **Handlinger**: vekk (Wake-on-LAN), dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, neste, forrige, si tekst, vis varsel
 - **Triggere**: CPU gikk over X %, Macen gikk offline, Macen kom online (+ alle standard kapabilitet-triggere)
 
 ## Ikoner
@@ -105,4 +118,17 @@ Alle ikoner genereres med `python3 tools/generate_icons.py` (krever Pillow): app
 
 ## Sikkerhet
 
-API-et er kun ment for lokalt nettverk og bruker et tilfeldig token. Ikke eksponer porten mot internett. Restart/slå av kan skrus av i menylinje-appen.
+MacBridge kan bare gjøre det som står i kommandolisten over. Konkret:
+
+- **Ingen vilkårlig kjøring**: ingen kommando tar en sti, URL, script eller kommandolinje fra nettverket. `open_url` er fjernet. Tekst til `say`/`notify` lengdebegrenses og sendes som egne argumenter, aldri limt inn i et script.
+- **Signerte forespørsler**: HMAC-SHA256 med tidsstempel (±60 s) og engangs-nonce, så tokenet aldri går over nettverket og opptak ikke kan spilles av på nytt. Svarene er også signert, så en falsk «Mac» på nettet blir avvist av HA og Homey.
+- **Kun lokalt nett**: serveren godtar bare tilkoblinger fra private/lokale adresser, begrenser antall samtidige tilkoblinger, størrelse og tid, og stenger ute adresser etter 10 feilede forsøk (5 min).
+- **Token i Nøkkelring** (ikke i en innstillingsfil). «Copy token» kopierer bare til denne Macen (ikke Universal Clipboard) og tømmes etter ett minutt.
+- **Minst mulig rettigheter**: ingen Tilgjengelighet/System Events. Hardened runtime med én rettighet (Apple Events), som macOS uansett spør om for hver app (Musikk, Spotify, loginwindow).
+- **Ingen personlig info ut**: serienummeret deles ikke (enheten identifiseres med en anonym hash). `/api/ping` viser ingen enhetsinfo, og Bonjour bare Mac-navnet og modellen.
+- Restart/slå av og tale/varsler kan skrus av i menyen.
+- Trafikken er ikke kryptert (bare signert), så status som «spilles nå» kan sees av andre på samme nett. Ikke eksponer porten mot internett.
+
+### Oppgradering fra 1.0
+
+1.1 bruker signerte forespørsler, så Mac-appen, Home Assistant-integrasjonen og Homey-appen må oppdateres samtidig. Eksisterende oppsett fortsetter med samme token. Push-URL til HA må endres til `mac_bridge_<device-id>` for nye oppsett (eldre oppsett beholder serienummer-ID-en).

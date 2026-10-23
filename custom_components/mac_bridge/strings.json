@@ -5,11 +5,17 @@
       "user": {
         "title": "Connect to {name}",
         "description": "Open the MacBridge menu bar app on your Mac and choose \"Copy token\".",
-        "data": { "host": "Host", "port": "Port", "token": "Token" }
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "token": "Token"
+        }
       },
       "reauth_confirm": {
         "description": "The token was rejected. Paste the current token from the MacBridge menu bar app.",
-        "data": { "token": "Token" }
+        "data": {
+          "token": "Token"
+        }
       }
     },
     "error": {
@@ -23,54 +29,122 @@
   },
   "options": {
     "step": {
-      "init": { "data": { "scan_interval": "Polling interval (seconds)" } }
+      "init": {
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
     }
   },
   "entity": {
     "binary_sensor": {
-      "online": { "name": "Online" },
-      "charging": { "name": "Charging" }
+      "online": {
+        "name": "Online"
+      },
+      "charging": {
+        "name": "Charging"
+      }
     },
     "button": {
-      "sleep": { "name": "Sleep" },
-      "display_sleep": { "name": "Display sleep" },
-      "wake_display": { "name": "Wake display" },
-      "lock": { "name": "Lock screen" },
-      "restart": { "name": "Restart" },
-      "shutdown": { "name": "Shut down" },
-      "play_pause": { "name": "Play/pause" },
-      "next": { "name": "Next track" },
-      "previous": { "name": "Previous track" },
-      "mute": { "name": "Mute" }
+      "wake": {
+        "name": "Wake"
+      },
+      "sleep": {
+        "name": "Sleep"
+      },
+      "display_sleep": {
+        "name": "Display sleep"
+      },
+      "wake_display": {
+        "name": "Wake display"
+      },
+      "lock": {
+        "name": "Lock screen"
+      },
+      "restart": {
+        "name": "Restart"
+      },
+      "shutdown": {
+        "name": "Shut down"
+      },
+      "play_pause": {
+        "name": "Play/pause"
+      },
+      "next": {
+        "name": "Next track"
+      },
+      "previous": {
+        "name": "Previous track"
+      },
+      "mute": {
+        "name": "Mute"
+      }
     },
     "number": {
-      "volume": { "name": "Volume" }
+      "volume": {
+        "name": "Volume"
+      }
     },
     "sensor": {
-      "cpu_usage": { "name": "CPU usage" },
-      "memory_usage": { "name": "Memory usage" },
-      "memory_used": { "name": "Memory used" },
-      "disk_usage": { "name": "Disk usage" },
-      "disk_free": { "name": "Disk free" },
-      "load_1m": { "name": "Load (1 min)" },
-      "battery": { "name": "Battery" },
+      "cpu_usage": {
+        "name": "CPU usage"
+      },
+      "memory_usage": {
+        "name": "Memory usage"
+      },
+      "memory_used": {
+        "name": "Memory used"
+      },
+      "disk_usage": {
+        "name": "Disk usage"
+      },
+      "disk_free": {
+        "name": "Disk free"
+      },
+      "load_1m": {
+        "name": "Load (1 min)"
+      },
+      "battery": {
+        "name": "Battery"
+      },
       "thermal_state": {
         "name": "Thermal state",
-        "state": { "nominal": "Nominal", "fair": "Fair", "serious": "Serious", "critical": "Critical", "unknown": "Unknown" }
+        "state": {
+          "nominal": "Nominal",
+          "fair": "Fair",
+          "serious": "Serious",
+          "critical": "Critical",
+          "unknown": "Unknown"
+        }
       },
-      "last_boot": { "name": "Last boot" },
-      "volume": { "name": "Volume level" },
-      "media_title": { "name": "Now playing" }
+      "last_boot": {
+        "name": "Last boot"
+      },
+      "volume": {
+        "name": "Volume level"
+      },
+      "media_title": {
+        "name": "Now playing"
+      }
     }
   },
   "services": {
     "send_command": {
       "name": "Send command",
-      "description": "Send any command to the Mac (e.g. say, notify, open_url).",
+      "description": "Send a command to the Mac (e.g. say, notify, restart).",
       "fields": {
-        "device_id": { "name": "Mac", "description": "The Mac to control." },
-        "command": { "name": "Command", "description": "Command to run." },
-        "value": { "name": "Value", "description": "Optional value: volume 0-100, text to speak, URL, or {title, message} for notify." }
+        "device_id": {
+          "name": "Mac",
+          "description": "The Mac to control."
+        },
+        "command": {
+          "name": "Command",
+          "description": "Command to run."
+        },
+        "value": {
+          "name": "Value",
+          "description": "Optional value: volume 0-100, text to speak, or {title, message} for notify."
+        }
       }
     }
   }

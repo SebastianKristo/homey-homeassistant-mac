@@ -23,9 +23,12 @@ class MacDriver extends Homey.Driver {
   async validate({ host, port, token }) {
     const client = new MacBridgeClient({ host, port: Number(port) || 8765, token });
     const status = await client.status();
+    const device = status.device || {};
+    if (!device.id) throw new Error('Update MacBridge on the Mac to version 1.1 or newer');
     return {
-      name: status.device.name,
-      data: { id: status.device.serial },
+      name: device.name || 'Mac',
+      data: { id: device.id },
+      store: { mac_address: device.mac_address || null },
       settings: { host, port: Number(port) || 8765, token, interval: 10 },
     };
   }
@@ -40,7 +43,9 @@ class MacDriver extends Homey.Driver {
     session.setHandler('current', async () => device.getSettings());
     session.setHandler('configure', async data => {
       const result = await this.validate(data);
-      if (result.data.id !== device.getData().id) throw new Error('This is a different Mac');
+      // Devices paired with version 1.0 used the hardware serial as id; it is no longer shared.
+      const legacy = !/^[0-9a-f]{24}$/.test(device.getData().id);
+      if (!legacy && result.data.id !== device.getData().id) throw new Error('This is a different Mac');
       await device.setSettings(result.settings);
       await device.reconnect();
       return null;
