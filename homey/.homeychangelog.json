@@ -1,0 +1,9 @@
+{
+  "1.1.2": {
+    "en": "first release"
+  },
+  "1.2.0": {
+    "en": "Windows PC support: new Windows PC device type for MacBridge for Windows. Flow cards work for both Mac and PC.",
+    "no": "Støtte for Windows-PC: ny enhetstype Windows-PC for MacBridge for Windows. Flow-kortene fungerer for både Mac og PC."
+  }
+}
