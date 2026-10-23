@@ -20,12 +20,12 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleExecutable</key><string>MacBridge</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0.0</string>
-    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleShortVersionString</key><string>1.1.0</string>
+    <key>CFBundleVersion</key><string>2</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>MacBridge controls Music, Spotify, volume and power from Home Assistant and Homey.</string>
+    <string>MacBridge controls playback in Music and Spotify, and restart/shutdown, when Home Assistant or Homey asks it to.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>MacBridge serves an API on your local network for Home Assistant and Homey.</string>
     <key>NSBonjourServices</key>
@@ -34,6 +34,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Ad-hoc sign so macOS remembers granted permissions.
-codesign --force --deep --sign - "$APP"
+# Ad-hoc sign with the hardened runtime and a single entitlement (Apple Events), so macOS
+# remembers granted permissions and the app cannot load unsigned code.
+codesign --force --options runtime --entitlements Resources/MacBridge.entitlements --sign - "$APP"
+codesign --verify --strict "$APP"
 echo "Built $APP – copy it to /Applications and add it to Login Items."
