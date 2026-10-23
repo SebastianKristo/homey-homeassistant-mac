@@ -1,4 +1,4 @@
-name: Build MacBridge DMG
+name: Build MacBridge (Mac + Windows)
 
 on:
   push:
@@ -8,10 +8,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
+    name: Mac (DMG)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,10 +24,44 @@ jobs:
         with:
           name: MacBridge-dmg
           path: mac-app/build/MacBridge.dmg
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+
+  build-windows:
+    name: Windows (exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          files: mac-app/build/MacBridge.dmg
+          dotnet-version: "8.0.x"
+      - name: Build exe
+        shell: pwsh
+        run: |
+          dotnet publish windows-app/MacBridge.Windows.csproj -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:EnableCompressionInSingleFile=true -p:DebugType=none -o windows-app/publish
+          Move-Item windows-app/publish/MacBridge.exe windows-app/publish/MacBridge-Windows.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MacBridge-Windows-exe
+          path: windows-app/publish/MacBridge-Windows.exe
+
+  release:
+    name: Attach to release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/MacBridge.dmg
+            dist/MacBridge-Windows.exe
           name: MacBridge ${{ github.ref_name }}
           body_path: .github/release-notes/${{ github.ref_name }}.md

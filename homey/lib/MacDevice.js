@@ -29,7 +29,7 @@ class MacDevice extends Homey.Device {
     await this.reconnect();
   }
 
-  // Mac got a new IP (mDNS discovery).
+  // The computer got a new IP (mDNS discovery).
   onDiscoveryAddressChanged(result) {
     this.setSettings({ host: result.address }).then(() => this.reconnect()).catch(this.error);
   }
@@ -71,7 +71,7 @@ class MacDevice extends Homey.Device {
       const result = await this.client.command('wake');
       if (result.status) this.applyStatus(result.status);
     } catch (err) {
-      if (!mac) throw new Error('The Mac is not reachable, and its MAC address for Wake-on-LAN is not known yet');
+      if (!mac) throw new Error('The computer is not reachable, and its MAC address for Wake-on-LAN is not known yet');
       this.homey.setTimeout(() => this.poll(), 10000); // still waking up
     }
     return null;
@@ -79,7 +79,7 @@ class MacDevice extends Homey.Device {
 
   setOffline(err) {
     if (this.online !== false) {
-      this.log('Mac offline:', err.message);
+      this.log('Computer offline:', err.message);
       if (this.online === true) this.driver.wentOfflineTrigger.trigger(this).catch(this.error);
     }
     this.online = false;

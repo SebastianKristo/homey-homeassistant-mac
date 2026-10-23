@@ -3,3 +3,6 @@ mac-app/build/
 node_modules/
 __pycache__/
 .homeybuild/
+windows-app/bin/
+windows-app/obj/
+windows-app/publish/

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generates all raster icons/images for MacBridge (Mac app, DMG, Homey, Home Assistant).
+"""Generates all raster icons/images for MacBridge (Mac app, DMG, Windows app, Homey, Home Assistant).
 
 Run from the repo root: python3 tools/generate_icons.py   (needs Pillow)
 """
@@ -138,6 +138,23 @@ def device_image(w, h, kind):
         d.polygon([(cx - s / 2, base_y), (cx + s / 2, base_y), (cx + s * 0.47, base_y + s * 0.06),
                    (cx - s * 0.47, base_y + s * 0.06)], fill=WHITE)
         d.rounded_rectangle([cx - s * 0.08, base_y, cx + s * 0.08, base_y + s * 0.02], radius=s * 0.01, fill=TOP)
+    elif kind == "windows_pc":
+        mw, mh = s * 0.9, s * 0.58
+        top = cy - mh / 2 - s * 0.1
+        lw = s * 0.045
+        d.rounded_rectangle([cx - mw / 2, top, cx + mw / 2, top + mh], radius=s * 0.03, outline=WHITE, width=int(lw))
+        # four-pane window logo
+        g, p = s * 0.02, s * 0.13
+        for dx in (-1, 1):
+            for dy in (-1, 1):
+                x0 = cx + (g if dx > 0 else -g - p)
+                y0 = top + mh / 2 + (g if dy > 0 else -g - p)
+                d.rectangle([x0, y0, x0 + p, y0 + p], fill=WHITE)
+        # stand
+        d.polygon([(cx - s * 0.06, top + mh), (cx + s * 0.06, top + mh), (cx + s * 0.09, top + mh + s * 0.14),
+                   (cx - s * 0.09, top + mh + s * 0.14)], fill=WHITE)
+        d.rounded_rectangle([cx - s * 0.22, top + mh + s * 0.13, cx + s * 0.22, top + mh + s * 0.18],
+                            radius=s * 0.02, fill=WHITE)
     return img.resize((w, h), Image.LANCZOS).convert("RGB")
 
 
@@ -148,7 +165,7 @@ def homey_images():
         device_image(250, 175, kind).save(out / "small.png")
         device_image(500, 350, kind).save(out / "large.png")
         device_image(1000, 700, kind).save(out / "xlarge.png")
-    for driver, kind in (("mac_mini", "mac_mini"), ("macbook_pro", "macbook")):
+    for driver, kind in (("mac_mini", "mac_mini"), ("macbook_pro", "macbook"), ("windows_pc", "windows_pc")):
         out = ROOT / f"homey/drivers/{driver}/assets/images"
         out.mkdir(parents=True, exist_ok=True)
         device_image(75, 75, kind).save(out / "small.png")
@@ -165,11 +182,18 @@ def ha_brand(master):
     master.resize((512, 512), Image.LANCZOS).save(out / "logo@2x.png")
 
 
+def windows_icon(master):
+    out = ROOT / "windows-app/Resources"
+    out.mkdir(parents=True, exist_ok=True)
+    master.save(out / "MacBridge.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+
+
 if __name__ == "__main__":
     master = mac_app_icons()
     dmg_background(1)
     dmg_background(2)
     homey_images()
     ha_brand(master)
+    windows_icon(master)
     master.resize((256, 256), Image.LANCZOS).save(ROOT / "icon.png")
     print("Icons generated")
