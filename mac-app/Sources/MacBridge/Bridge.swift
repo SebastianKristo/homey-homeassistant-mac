@@ -1,18 +1,21 @@
 import Foundation
 
-/// Routes HTTP requests, executes commands and pushes status to Home Assistant / Homey.
+/// Routes HTTP requests, executes commands and pushes status to Home Assistant.
 final class Bridge {
     private let stats = SystemStats()
     private let media = MediaController()
     private let config = Config.shared
     private let stateLock = NSLock()
+    private let nonces = NonceCache()
+    private let limiter = FailureLimiter()
     private var pushTimer: Timer?
 
+    /// The complete list of things MacBridge can be asked to do. Anything else is rejected.
     static let commands = [
         "play_pause", "play", "pause", "next", "previous",
         "set_volume", "volume_up", "volume_down", "mute", "unmute", "set_mute",
-        "sleep", "display_sleep", "wake_display", "lock", "restart", "shutdown",
-        "say", "open_url", "notify",
+        "sleep", "display_sleep", "wake", "wake_display", "lock", "restart", "shutdown",
+        "say", "notify",
     ]
 
     // MARK: Status
@@ -27,6 +30,7 @@ final class Bridge {
             "muted": volume.muted,
             "media": media.nowPlaying(),
             "commands": Self.commands,
+            "power_commands": config.allowPowerCommands,
             "timestamp": Int(Date().timeIntervalSince1970),
         ]
     }
@@ -34,13 +38,41 @@ final class Bridge {
     // MARK: HTTP
 
     func handle(_ request: HTTPRequest) -> HTTPResponse {
-        if request.path == "/api/ping" {
-            return .json(["ok": true, "device": SystemControl.deviceInfo()])
+        if request.method == "GET" && request.path == "/api/ping" {
+            return .json(["ok": true, "protocol": "MacBridge-v1"])
         }
-        guard request.headers["authorization"] == "Bearer \(config.token)" else {
+        if limiter.isBlocked(request.remoteHost) {
+            return .error("too many failed attempts", status: 429)
+        }
+        guard let nonce = authenticate(request) else {
+            limiter.recordFailure(request.remoteHost)
             return .error("unauthorized", status: 401)
         }
+        var response = route(request)
+        response.headers["X-MacBridge-Signature"] = Auth.sign(
+            Auth.responseMessage(nonce: nonce, status: response.status, body: response.body), token: config.token
+        )
+        return response
+    }
 
+    /// Verifies the request signature, timestamp and nonce. Returns the nonce on success.
+    private func authenticate(_ request: HTTPRequest) -> String? {
+        guard let timestamp = request.headers[Auth.timestampHeader],
+              let nonce = request.headers[Auth.nonceHeader],
+              let signature = request.headers[Auth.signatureHeader],
+              let seconds = TimeInterval(timestamp),
+              abs(Date().timeIntervalSince1970 - seconds) <= Auth.maxSkew,
+              Auth.isValidNonce(nonce)
+        else { return nil }
+        let expected = Auth.sign(
+            Auth.requestMessage(method: request.method, target: request.target, timestamp: timestamp, nonce: nonce, body: request.body),
+            token: config.token
+        )
+        guard Auth.matches(signature, expected), nonces.insert(nonce) else { return nil }
+        return nonce
+    }
+
+    private func route(_ request: HTTPRequest) -> HTTPResponse {
         switch (request.method, request.path) {
         case ("GET", "/api/status"):
             return .json(status())
@@ -53,7 +85,7 @@ final class Bridge {
             } catch let error as CommandError {
                 return .error(error.message, status: error.status)
             } catch {
-                return .error("\(error)", status: 500)
+                return .error("command failed", status: 500)
             }
             // Give the system a moment, then return fresh state.
             usleep(300_000)
@@ -71,7 +103,10 @@ final class Bridge {
     }
 
     func execute(_ command: String, value: Any?) throws {
-        NSLog("MacBridge command: \(command) \(String(describing: value))")
+        guard Self.commands.contains(command) else {
+            throw CommandError(message: "unknown command", status: 400)
+        }
+        NSLog("MacBridge command: \(command)")
         switch command {
         case "play_pause": media.playPause()
         case "play": media.play()
@@ -79,7 +114,9 @@ final class Bridge {
         case "next": media.next()
         case "previous": media.previous()
         case "set_volume":
-            guard let level = intValue(value) else { throw CommandError(message: "value 0-100 required", status: 400) }
+            guard let level = intValue(value), (0...100).contains(level) else {
+                throw CommandError(message: "value 0-100 required", status: 400)
+            }
             media.setVolume(level)
         case "volume_up": media.volumeStep(intValue(value) ?? 6)
         case "volume_down": media.volumeStep(-(intValue(value) ?? 6))
@@ -88,25 +125,29 @@ final class Bridge {
         case "set_mute": media.setMuted(boolValue(value))
         case "sleep": runLater(SystemControl.sleep)
         case "display_sleep": runLater(SystemControl.displaySleep)
-        case "wake_display": SystemControl.wakeDisplay()
+        case "wake", "wake_display": SystemControl.wakeDisplay()
         case "lock": SystemControl.lock()
         case "restart", "shutdown":
             guard config.allowPowerCommands else {
-                throw CommandError(message: "power commands disabled in MacBridge", status: 403)
+                throw CommandError(message: "restart/shutdown is turned off in MacBridge", status: 403)
             }
             runLater(command == "restart" ? SystemControl.restart : SystemControl.shutdown)
         case "say":
-            guard let text = value as? String else { throw CommandError(message: "text required", status: 400) }
-            DispatchQueue.global().async { SystemControl.say(text) }
-        case "open_url":
-            guard let url = value as? String else { throw CommandError(message: "url required", status: 400) }
-            SystemControl.openURL(url)
+            guard config.allowSpeechAndNotifications else {
+                throw CommandError(message: "speech is turned off in MacBridge", status: 403)
+            }
+            guard let text = value as? String, !text.isEmpty else { throw CommandError(message: "text required", status: 400) }
+            SystemControl.say(text)
         case "notify":
+            guard config.allowSpeechAndNotifications else {
+                throw CommandError(message: "notifications are turned off in MacBridge", status: 403)
+            }
             let dict = value as? [String: Any]
             let message = (dict?["message"] as? String) ?? (value as? String) ?? ""
+            guard !message.isEmpty else { throw CommandError(message: "message required", status: 400) }
             SystemControl.notify(title: (dict?["title"] as? String) ?? "Home", message: message)
         default:
-            throw CommandError(message: "unknown command \(command)", status: 400)
+            throw CommandError(message: "unknown command", status: 400)
         }
     }
 
@@ -116,8 +157,10 @@ final class Bridge {
     }
 
     private func intValue(_ v: Any?) -> Int? {
-        if let i = v as? Int { return i }
-        if let d = v as? Double { return d < 1 ? Int(d * 100) : Int(d) } // accepts 0.0-1.0 too
+        if let n = v as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID() {
+            let d = n.doubleValue
+            return d.isFinite && abs(d) < 1_000 ? Int(d.rounded()) : nil
+        }
         if let s = v as? String { return Int(s) }
         return nil
     }
@@ -125,7 +168,7 @@ final class Bridge {
     private func boolValue(_ v: Any?) -> Bool {
         if let b = v as? Bool { return b }
         if let s = v as? String { return s == "true" || s == "1" }
-        return (v as? Int ?? 0) != 0
+        return false
     }
 
     // MARK: Push
@@ -138,14 +181,22 @@ final class Bridge {
         }
     }
 
+    /// Sends status to the configured webhooks, signed so the receiver can verify it came from this Mac.
     private func push(_ state: [String: Any]) {
         guard let body = try? JSONSerialization.data(withJSONObject: state) else { return }
         for string in config.pushURLs {
             guard let url = URL(string: string) else { continue }
+            let timestamp = String(Int(Date().timeIntervalSince1970))
+            let nonce = Auth.randomNonce()
             var request = URLRequest(url: url, timeoutInterval: 5)
             request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.setValue("Bearer \(config.token)", forHTTPHeaderField: "Authorization")
+            request.setValue(timestamp, forHTTPHeaderField: "X-MacBridge-Timestamp")
+            request.setValue(nonce, forHTTPHeaderField: "X-MacBridge-Nonce")
+            request.setValue(
+                Auth.sign(Auth.pushMessage(timestamp: timestamp, nonce: nonce, body: body), token: config.token),
+                forHTTPHeaderField: "X-MacBridge-Signature"
+            )
             request.httpBody = body
             URLSession.shared.dataTask(with: request).resume()
         }

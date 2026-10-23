@@ -22,6 +22,7 @@ send_command:
             - mute
             - unmute
             - sleep
+            - wake
             - display_sleep
             - wake_display
             - lock
@@ -29,7 +30,6 @@ send_command:
             - shutdown
             - say
             - notify
-            - open_url
     value:
       example: "Hello from Home Assistant"
       selector:

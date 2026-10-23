@@ -3,10 +3,24 @@
 const Homey = require('homey');
 const MacBridgeClient = require('./MacBridgeClient');
 
+// Buttons on the device tile. Added to devices paired with an older version too.
+const BUTTONS = {
+  'button.wake': 'wake',
+  'button.sleep': 'sleep',
+  'button.restart': 'restart',
+  'button.shutdown': 'shutdown',
+};
+
 class MacDevice extends Homey.Device {
   async onInit() {
     this.online = null;
-    this.registerCapabilityListener('onoff', on => this.sendCommand(on ? 'wake_display' : 'sleep'));
+    for (const capability of Object.keys(BUTTONS)) {
+      if (!this.hasCapability(capability)) await this.addCapability(capability).catch(this.error);
+    }
+    for (const [capability, command] of Object.entries(BUTTONS)) {
+      this.registerCapabilityListener(capability, () => this.sendCommand(command));
+    }
+    this.registerCapabilityListener('onoff', on => this.sendCommand(on ? 'wake' : 'sleep'));
     this.registerCapabilityListener('speaker_playing', playing => this.sendCommand(playing ? 'play' : 'pause'));
     this.registerCapabilityListener('speaker_next', () => this.sendCommand('next'));
     this.registerCapabilityListener('speaker_prev', () => this.sendCommand('previous'));
@@ -43,8 +57,24 @@ class MacDevice extends Homey.Device {
   }
 
   async sendCommand(command, value) {
+    if (command === 'wake') return this.wake();
     const result = await this.client.command(command, value);
     if (result.status) this.applyStatus(result.status);
+    return null;
+  }
+
+  /** Wake-on-LAN for a sleeping Mac, plus waking the display if it is already awake. */
+  async wake() {
+    const mac = this.getStoreValue('mac_address');
+    if (mac) await MacBridgeClient.wakeOnLan(mac, this.getSettings().host).catch(this.error);
+    try {
+      const result = await this.client.command('wake');
+      if (result.status) this.applyStatus(result.status);
+    } catch (err) {
+      if (!mac) throw new Error('The Mac is not reachable, and its MAC address for Wake-on-LAN is not known yet');
+      this.homey.setTimeout(() => this.poll(), 10000); // still waking up
+    }
+    return null;
   }
 
   setOffline(err) {
@@ -65,6 +95,11 @@ class MacDevice extends Homey.Device {
 
     const stats = status.stats || {};
     const media = status.media || {};
+    const device = status.device || {};
+
+    if (typeof device.mac_address === 'string' && device.mac_address !== this.getStoreValue('mac_address')) {
+      this.setStoreValue('mac_address', device.mac_address).catch(this.error);
+    }
 
     const previousCpu = this.getCapabilityValue('measure_cpu') || 0;
     if (typeof stats.cpu_usage === 'number') {

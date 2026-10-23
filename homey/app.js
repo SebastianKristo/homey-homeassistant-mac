@@ -3,8 +3,8 @@
 const Homey = require('homey');
 
 const COMMAND_ACTIONS = [
-  'sleep', 'display_sleep', 'wake_display', 'lock', 'restart', 'shutdown',
-  'play_pause', 'say', 'notify', 'open_url',
+  'wake', 'sleep', 'display_sleep', 'wake_display', 'lock', 'restart', 'shutdown',
+  'play_pause', 'next', 'previous', 'say', 'notify',
 ];
 
 class MacBridgeApp extends Homey.App {

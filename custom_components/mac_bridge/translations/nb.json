@@ -46,6 +46,9 @@
       }
     },
     "button": {
+      "wake": {
+        "name": "Vekk"
+      },
       "sleep": {
         "name": "Dvale"
       },
@@ -128,7 +131,7 @@
   "services": {
     "send_command": {
       "name": "Send kommando",
-      "description": "Send en kommando til Macen (f.eks. say, notify, open_url).",
+      "description": "Send en kommando til Macen (f.eks. say, notify, restart).",
       "fields": {
         "device_id": {
           "name": "Mac",
@@ -140,7 +143,7 @@
         },
         "value": {
           "name": "Value",
-          "description": "Optional value: volume 0-100, text to speak, URL, or {title, message} for notify."
+          "description": "Valgfri verdi: volum 0-100, tekst som skal leses opp, eller {title, message} for notify."
         }
       }
     }

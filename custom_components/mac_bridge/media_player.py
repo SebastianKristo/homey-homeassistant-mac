@@ -48,6 +48,8 @@ class MacMediaPlayer(MacBridgeEntity, MediaPlayerEntity):
 
     def __init__(self, coordinator) -> None:
         super().__init__(coordinator, "media_player")
+        self._last_position = self.media.get("position")
+        self._position_updated_at = dt_util.utcnow()
 
     @property
     def available(self) -> bool:
@@ -90,7 +92,23 @@ class MacMediaPlayer(MacBridgeEntity, MediaPlayerEntity):
 
     @property
     def media_position_updated_at(self):
-        return dt_util.utcnow() if self.media.get("state") == "playing" else None
+        return self._position_updated_at
+
+    @property
+    def media_image_url(self) -> str | None:
+        url = self.media.get("artwork_url")
+        return url if isinstance(url, str) and url.startswith("https://") else None
+
+    @property
+    def media_image_remotely_accessible(self) -> bool:
+        return False  # proxied through Home Assistant
+
+    def _handle_coordinator_update(self) -> None:
+        position = self.media.get("position")
+        if position != self._last_position or self.media.get("state") != "playing":
+            self._position_updated_at = dt_util.utcnow()
+        self._last_position = position
+        super()._handle_coordinator_update()
 
     @property
     def app_name(self) -> str | None:
@@ -127,4 +145,4 @@ class MacMediaPlayer(MacBridgeEntity, MediaPlayerEntity):
         await self.coordinator.async_command("sleep")
 
     async def async_turn_on(self) -> None:
-        await self.coordinator.async_command("wake_display")
+        await self.coordinator.async_wake()
