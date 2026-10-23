@@ -1,0 +1,518 @@
+{
+  "id": "no.kristo.macbridge",
+  "version": "1.0.0",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Mac Bridge",
+    "no": "Mac Bridge"
+  },
+  "description": {
+    "en": "Control and monitor your Mac",
+    "no": "Styr og overvåk Macen din"
+  },
+  "category": [
+    "video"
+  ],
+  "permissions": [],
+  "brandColor": "#1d1d1f",
+  "author": {
+    "name": "Sebastian Kristo",
+    "email": "sebastian@kristo.no"
+  },
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  },
+  "discovery": {
+    "macbridge": {
+      "type": "mdns-sd",
+      "mdns-sd": {
+        "name": "macbridge",
+        "protocol": "tcp"
+      },
+      "id": "{{txt.id}}"
+    }
+  },
+  "capabilities": {
+    "measure_cpu": {
+      "type": "number",
+      "title": {
+        "en": "CPU usage",
+        "no": "CPU-bruk"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "insights": true,
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/icon.svg"
+    },
+    "measure_memory": {
+      "type": "number",
+      "title": {
+        "en": "Memory usage",
+        "no": "Minnebruk"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "insights": true,
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/icon.svg"
+    },
+    "measure_disk": {
+      "type": "number",
+      "title": {
+        "en": "Disk usage",
+        "no": "Diskbruk"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "insights": true,
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "min": 0,
+      "max": 100,
+      "icon": "/assets/icon.svg"
+    },
+    "measure_disk_free": {
+      "type": "number",
+      "title": {
+        "en": "Disk free",
+        "no": "Ledig disk"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "GB"
+      },
+      "insights": true,
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "measure_load": {
+      "type": "number",
+      "title": {
+        "en": "Load (1 min)",
+        "no": "Last (1 min)"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": ""
+      },
+      "insights": true,
+      "decimals": 2,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "mac_thermal_state": {
+      "type": "string",
+      "title": {
+        "en": "Thermal state",
+        "no": "Temperaturstatus"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    }
+  },
+  "flow": {
+    "actions": [
+      {
+        "id": "sleep",
+        "title": {
+          "en": "Put the Mac to sleep",
+          "no": "Sett Macen i dvale"
+        },
+        "titleFormatted": {
+          "en": "Put the Mac to sleep",
+          "no": "Sett Macen i dvale"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "display_sleep",
+        "title": {
+          "en": "Turn off the display",
+          "no": "Slå av skjermen"
+        },
+        "titleFormatted": {
+          "en": "Turn off the display",
+          "no": "Slå av skjermen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "wake_display",
+        "title": {
+          "en": "Wake the display",
+          "no": "Vekk skjermen"
+        },
+        "titleFormatted": {
+          "en": "Wake the display",
+          "no": "Vekk skjermen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "lock",
+        "title": {
+          "en": "Lock the screen",
+          "no": "Lås skjermen"
+        },
+        "titleFormatted": {
+          "en": "Lock the screen",
+          "no": "Lås skjermen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "restart",
+        "title": {
+          "en": "Restart the Mac",
+          "no": "Start Macen på nytt"
+        },
+        "titleFormatted": {
+          "en": "Restart the Mac",
+          "no": "Start Macen på nytt"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "shutdown",
+        "title": {
+          "en": "Shut down the Mac",
+          "no": "Slå av Macen"
+        },
+        "titleFormatted": {
+          "en": "Shut down the Mac",
+          "no": "Slå av Macen"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "play_pause",
+        "title": {
+          "en": "Play/pause",
+          "no": "Spill/pause"
+        },
+        "titleFormatted": {
+          "en": "Play/pause",
+          "no": "Spill/pause"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "say",
+        "title": {
+          "en": "Speak text",
+          "no": "Si tekst"
+        },
+        "titleFormatted": {
+          "en": "Speak text [[value]]",
+          "no": "Si tekst [[value]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "type": "text",
+            "name": "value",
+            "title": {
+              "en": "Text",
+              "no": "Tekst"
+            }
+          }
+        ]
+      },
+      {
+        "id": "notify",
+        "title": {
+          "en": "Show notification",
+          "no": "Vis varsel"
+        },
+        "titleFormatted": {
+          "en": "Show notification [[value]]",
+          "no": "Vis varsel [[value]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "type": "text",
+            "name": "value",
+            "title": {
+              "en": "Message",
+              "no": "Melding"
+            }
+          }
+        ]
+      },
+      {
+        "id": "open_url",
+        "title": {
+          "en": "Open URL",
+          "no": "Åpne URL"
+        },
+        "titleFormatted": {
+          "en": "Open URL [[value]]",
+          "no": "Åpne URL [[value]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "type": "text",
+            "name": "value",
+            "title": {
+              "en": "URL",
+              "no": "URL"
+            }
+          }
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "cpu_above",
+        "title": {
+          "en": "CPU usage went above…",
+          "no": "CPU-bruk gikk over…"
+        },
+        "titleFormatted": {
+          "en": "CPU usage went above [[threshold]]%",
+          "no": "CPU-bruk gikk over [[threshold]]%"
+        },
+        "tokens": [
+          {
+            "name": "cpu",
+            "type": "number",
+            "title": {
+              "en": "CPU",
+              "no": "CPU"
+            },
+            "example": 85
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          },
+          {
+            "type": "number",
+            "name": "threshold",
+            "min": 0,
+            "max": 100,
+            "placeholder": {
+              "en": "80",
+              "no": "80"
+            }
+          }
+        ]
+      },
+      {
+        "id": "went_offline",
+        "title": {
+          "en": "Mac went offline",
+          "no": "Macen gikk offline"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      },
+      {
+        "id": "came_online",
+        "title": {
+          "en": "Mac came online",
+          "no": "Macen kom online"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac"
+          }
+        ]
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "id": "mac",
+      "name": {
+        "en": "Mac",
+        "no": "Mac"
+      },
+      "class": "speaker",
+      "capabilities": [
+        "onoff",
+        "speaker_playing",
+        "speaker_prev",
+        "speaker_next",
+        "speaker_track",
+        "speaker_artist",
+        "speaker_album",
+        "volume_set",
+        "volume_mute",
+        "measure_cpu",
+        "measure_memory",
+        "measure_disk",
+        "measure_disk_free",
+        "measure_load",
+        "mac_thermal_state",
+        "measure_battery"
+      ],
+      "capabilitiesOptions": {
+        "onoff": {
+          "title": {
+            "en": "Awake",
+            "no": "Våken"
+          }
+        }
+      },
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "discovery": "macbridge",
+      "images": {
+        "small": "/drivers/mac/assets/images/small.png",
+        "large": "/drivers/mac/assets/images/large.png"
+      },
+      "pair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "repair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "settings": [
+        {
+          "id": "host",
+          "type": "text",
+          "label": {
+            "en": "Host",
+            "no": "Vert"
+          },
+          "value": ""
+        },
+        {
+          "id": "port",
+          "type": "number",
+          "label": {
+            "en": "Port",
+            "no": "Port"
+          },
+          "value": 8765
+        },
+        {
+          "id": "token",
+          "type": "password",
+          "label": {
+            "en": "Token",
+            "no": "Token"
+          },
+          "value": ""
+        },
+        {
+          "id": "interval",
+          "type": "number",
+          "label": {
+            "en": "Polling interval (s)",
+            "no": "Oppdateringsintervall (s)"
+          },
+          "value": 10,
+          "min": 2,
+          "max": 600
+        }
+      ]
+    }
+  ]
+}

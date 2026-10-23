@@ -1,0 +1,5 @@
+.build/
+mac-app/build/
+node_modules/
+__pycache__/
+.homeybuild/

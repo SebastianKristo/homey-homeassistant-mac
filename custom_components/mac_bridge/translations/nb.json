@@ -1,0 +1,148 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Koble til {name}",
+        "description": "Åpne MacBridge i menylinjen på Macen og velg «Copy token».",
+        "data": {
+          "host": "Vert",
+          "port": "Port",
+          "token": "Token"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Tokenet ble avvist. Lim inn gjeldende token fra MacBridge.",
+        "data": {
+          "token": "Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kunne ikke koble til Macen. Kjører MacBridge?",
+      "invalid_auth": "Ugyldig token"
+    },
+    "abort": {
+      "already_configured": "Denne Macen er allerede satt opp",
+      "reauth_successful": "Token oppdatert"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Oppdateringsintervall (sekunder)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "online": {
+        "name": "Tilkoblet"
+      },
+      "charging": {
+        "name": "Lader"
+      }
+    },
+    "button": {
+      "sleep": {
+        "name": "Dvale"
+      },
+      "display_sleep": {
+        "name": "Skjerm av"
+      },
+      "wake_display": {
+        "name": "Vekk skjerm"
+      },
+      "lock": {
+        "name": "Lås skjerm"
+      },
+      "restart": {
+        "name": "Start på nytt"
+      },
+      "shutdown": {
+        "name": "Slå av"
+      },
+      "play_pause": {
+        "name": "Spill/pause"
+      },
+      "next": {
+        "name": "Neste spor"
+      },
+      "previous": {
+        "name": "Forrige spor"
+      },
+      "mute": {
+        "name": "Demp"
+      }
+    },
+    "number": {
+      "volume": {
+        "name": "Volum"
+      }
+    },
+    "sensor": {
+      "cpu_usage": {
+        "name": "CPU-bruk"
+      },
+      "memory_usage": {
+        "name": "Minnebruk"
+      },
+      "memory_used": {
+        "name": "Minne brukt"
+      },
+      "disk_usage": {
+        "name": "Diskbruk"
+      },
+      "disk_free": {
+        "name": "Ledig disk"
+      },
+      "load_1m": {
+        "name": "Last (1 min)"
+      },
+      "battery": {
+        "name": "Batteri"
+      },
+      "thermal_state": {
+        "name": "Temperaturstatus",
+        "state": {
+          "nominal": "Nominal",
+          "fair": "Fair",
+          "serious": "Serious",
+          "critical": "Critical",
+          "unknown": "Unknown"
+        }
+      },
+      "last_boot": {
+        "name": "Sist startet"
+      },
+      "volume": {
+        "name": "Volumnivå"
+      },
+      "media_title": {
+        "name": "Spilles nå"
+      }
+    }
+  },
+  "services": {
+    "send_command": {
+      "name": "Send kommando",
+      "description": "Send en kommando til Macen (f.eks. say, notify, open_url).",
+      "fields": {
+        "device_id": {
+          "name": "Mac",
+          "description": "The Mac to control."
+        },
+        "command": {
+          "name": "Command",
+          "description": "Command to run."
+        },
+        "value": {
+          "name": "Value",
+          "description": "Optional value: volume 0-100, text to speak, URL, or {title, message} for notify."
+        }
+      }
+    }
+  }
+}
