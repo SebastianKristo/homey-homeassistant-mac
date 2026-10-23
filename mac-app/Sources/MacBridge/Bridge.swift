@@ -10,6 +10,14 @@ final class Bridge {
     private let limiter = FailureLimiter()
     private var pushTimer: Timer?
 
+    /// Most recent rejected request, shown in the menu to help with pairing problems.
+    var lastAuthFailure: (reason: String, host: String, date: Date)? {
+        failureLock.lock(); defer { failureLock.unlock() }
+        return storedAuthFailure
+    }
+    private var storedAuthFailure: (reason: String, host: String, date: Date)?
+    private let failureLock = NSLock()
+
     /// The complete list of things MacBridge can be asked to do. Anything else is rejected.
     static let commands = [
         "play_pause", "play", "pause", "next", "previous",
@@ -50,6 +58,9 @@ final class Bridge {
             nonce = value
         case .failure(let failure):
             limiter.recordFailure(request.remoteHost)
+            failureLock.lock()
+            storedAuthFailure = (failure.reason, request.remoteHost, Date())
+            failureLock.unlock()
             NSLog("MacBridge: rejected request from \(request.remoteHost): \(failure.reason)")
             return .json(["error": "unauthorized", "reason": failure.reason, "protocol": "MacBridge-v1",
                           "server_time": Int(Date().timeIntervalSince1970)], status: 401)

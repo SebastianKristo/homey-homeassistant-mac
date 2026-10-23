@@ -1,7 +1,7 @@
 import AppKit
 
 /// Menu bar app: runs the HTTP API and shows connection details.
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let bridge = Bridge()
     private var server: HTTPServer?
     private var statusItem: NSStatusItem!
@@ -60,6 +60,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func rebuildMenu() {
         let menu = NSMenu()
+        populate(menu)
+        menu.delegate = self
+        statusItem.menu = menu
+    }
+
+    /// Refreshes the menu each time it opens (e.g. to show the last rejected request).
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        populate(menu)
+    }
+
+    private func populate(_ menu: NSMenu) {
         menu.addItem(withTitle: "MacBridge \(SystemControl.appVersion) – port \(config.port)", action: nil, keyEquivalent: "")
         menu.addItem(withTitle: "Device ID: \(SystemControl.deviceID())", action: nil, keyEquivalent: "")
         menu.addItem(.separator())
@@ -76,7 +88,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(item("Request permissions", #selector(requestPermissions)))
         menu.addItem(.separator())
         menu.addItem(item("Quit", #selector(quit), key: "q"))
-        statusItem.menu = menu
+        if let failure = bridge.lastAuthFailure {
+            let time = DateFormatter.localizedString(from: failure.date, dateStyle: .none, timeStyle: .short)
+            let hint: String
+            switch failure.reason {
+            case "unsigned_request": hint = "old Homey/HA app, update it"
+            case "wrong_token": hint = "wrong token"
+            case "clock_skew": hint = "clocks differ by more than 1 min"
+            default: hint = failure.reason
+            }
+            menu.addItem(.separator())
+            menu.addItem(withTitle: "Last rejected: \(failure.host) at \(time) (\(hint))", action: nil, keyEquivalent: "")
+        }
     }
 
     private func item(_ title: String, _ action: Selector, key: String = "") -> NSMenuItem {
