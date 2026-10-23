@@ -50,6 +50,24 @@ def push_message(timestamp: str, nonce: str, body: bytes) -> str:
     return f"MacBridge-v1-push\n{timestamp}\n{nonce}\n{_sha256(body)}"
 
 
+class MacBridgeOutdatedError(MacBridgeError):
+    """The Mac runs MacBridge 1.0, which does not understand signed requests."""
+
+
+def _raise_auth_error(raw: bytes) -> None:
+    try:
+        body = json.loads(raw)
+    except ValueError:
+        body = {}
+    if not isinstance(body, dict) or "protocol" not in body:
+        raise MacBridgeOutdatedError("MacBridge on the Mac is an old version")
+    if body.get("reason") == "clock_skew":
+        raise MacBridgeError("The clocks on Home Assistant and the Mac differ by more than a minute")
+    if body.get("reason") == "replayed_request":
+        raise MacBridgeError("Request rejected as a replay")
+    raise MacBridgeAuthError("Invalid token")
+
+
 class MacBridgeClient:
     """Talks to the MacBridge menu bar app."""
 
@@ -84,7 +102,7 @@ class MacBridgeClient:
             ) as resp:
                 raw = await resp.content.read(MAX_RESPONSE_BYTES + 1)
                 if resp.status == 401:
-                    raise MacBridgeAuthError("Invalid token")
+                    _raise_auth_error(raw)
                 if len(raw) > MAX_RESPONSE_BYTES:
                     raise MacBridgeError("Response too large")
                 expected = sign(self._token, response_message(nonce, resp.status, raw))

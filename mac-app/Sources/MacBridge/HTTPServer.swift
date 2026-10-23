@@ -44,6 +44,8 @@ final class HTTPServer {
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "macbridge.http", attributes: .concurrent)
     private let countLock = NSLock()
+    /// Called if the port cannot be opened (e.g. another program already uses it).
+    var onFailure: ((NWError) -> Void)?
     private var activeConnections = 0
 
     init(port: UInt16, handler: @escaping Handler) {
@@ -58,7 +60,10 @@ final class HTTPServer {
         let record = NWTXTRecord(txt)
         listener.service = NWListener.Service(name: serviceName, type: "_macbridge._tcp", domain: nil, txtRecord: record)
         listener.newConnectionHandler = { [weak self] conn in self?.accept(conn) }
-        listener.stateUpdateHandler = { state in NSLog("MacBridge listener: \(state)") }
+        listener.stateUpdateHandler = { [weak self] state in
+            NSLog("MacBridge listener: \(state)")
+            if case .failed(let error) = state { self?.onFailure?(error) }
+        }
         listener.start(queue: queue)
         self.listener = listener
     }
