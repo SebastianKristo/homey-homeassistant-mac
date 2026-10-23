@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect to {name}",
-        "description": "Open the MacBridge menu bar app on your Mac and choose \"Copy token\".",
+        "description": "Open MacBridge on the computer (menu bar on a Mac, notification area on Windows) and choose \"Copy token\".",
         "data": {
           "host": "Host",
           "port": "Port",
@@ -12,19 +12,19 @@
         }
       },
       "reauth_confirm": {
-        "description": "The token was rejected. Paste the current token from the MacBridge menu bar app.",
+        "description": "The token was rejected. Paste the current token from MacBridge (\"Copy token\").",
         "data": {
           "token": "Token"
         }
       }
     },
     "error": {
-      "cannot_connect": "Could not connect to the Mac. Is MacBridge running?",
+      "cannot_connect": "Could not connect to the computer. Is MacBridge running?",
       "invalid_auth": "Invalid token",
       "outdated_mac_app": "MacBridge on the Mac is an old version. Quit it from the menu bar and open version 1.1 or newer."
     },
     "abort": {
-      "already_configured": "This Mac is already configured",
+      "already_configured": "This computer is already configured",
       "reauth_successful": "Token updated"
     }
   },

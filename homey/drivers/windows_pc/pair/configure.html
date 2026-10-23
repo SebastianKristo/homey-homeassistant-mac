@@ -1,0 +1,72 @@
+<style>
+  .mb-field { margin-bottom: 12px; }
+  .mb-field label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .mb-field input, .mb-field select { width: 100%; }
+  .mb-error { color: #d33; margin-top: 8px; }
+</style>
+
+<p>Right-click the MacBridge icon in the Windows notification area (system tray) and choose "Copy token".</p>
+
+<div class="mb-field">
+  <label for="found">PC</label>
+  <select id="found" class="homey-form-select"><option value="">Manual</option></select>
+</div>
+<div class="mb-field">
+  <label for="host">Host / IP</label>
+  <input id="host" class="homey-form-input" type="text" placeholder="192.168.1.20">
+</div>
+<div class="mb-field">
+  <label for="port">Port</label>
+  <input id="port" class="homey-form-input" type="number" value="8765">
+</div>
+<div class="mb-field">
+  <label for="token">Token</label>
+  <input id="token" class="homey-form-input" type="password">
+</div>
+<button id="connect" class="homey-button-primary-full">Connect</button>
+<div id="error" class="mb-error"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  let macs = [];
+
+  Homey.emit('discovered').then(list => {
+    macs = list || [];
+    macs.forEach((mac, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${mac.name} (${mac.host})`;
+      $('found').appendChild(opt);
+    });
+    if (macs.length) { $('found').value = 0; $('found').onchange(); }
+  }).catch(() => {});
+
+  // Repair: prefill current settings.
+  Homey.emit('current').then(s => {
+    if (!s) return;
+    $('host').value = s.host; $('port').value = s.port; $('token').value = s.token;
+  }).catch(() => {});
+
+  $('found').onchange = () => {
+    const mac = macs[$('found').value];
+    if (mac) { $('host').value = mac.host; $('port').value = mac.port; }
+  };
+
+  $('connect').onclick = async () => {
+    $('error').textContent = '';
+    $('connect').classList.add('is-loading');
+    try {
+      const device = await Homey.emit('configure', {
+        host: $('host').value.trim(),
+        port: Number($('port').value),
+        token: $('token').value.trim(),
+      });
+      if (device) await Homey.createDevice(device);
+      Homey.done();
+    } catch (err) {
+      $('error').textContent = err.message || err;
+    } finally {
+      $('connect').classList.remove('is-loading');
+    }
+  };
+</script>

@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Koble til {name}",
-        "description": "Åpne MacBridge i menylinjen på Macen og velg «Copy token».",
+        "description": "Åpne MacBridge på maskinen (menylinjen på Mac, systemstatusfeltet på Windows) og velg «Copy token».",
         "data": {
           "host": "Vert",
           "port": "Port",
@@ -19,12 +19,12 @@
       }
     },
     "error": {
-      "cannot_connect": "Kunne ikke koble til Macen. Kjører MacBridge?",
+      "cannot_connect": "Kunne ikke koble til maskinen. Kjører MacBridge?",
       "invalid_auth": "Ugyldig token",
       "outdated_mac_app": "MacBridge på Macen er en gammel versjon. Avslutt den fra menylinjen og åpne versjon 1.1 eller nyere."
     },
     "abort": {
-      "already_configured": "Denne Macen er allerede satt opp",
+      "already_configured": "Denne maskinen er allerede satt opp",
       "reauth_successful": "Token oppdatert"
     }
   },

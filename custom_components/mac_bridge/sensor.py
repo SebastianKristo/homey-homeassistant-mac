@@ -74,10 +74,13 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     stats = coordinator.data.get("stats", {})
+    # Only created when the computer reports them (no battery on desktops; Windows has no load
+    # average or thermal state).
+    optional = {"battery": "battery_level", "load_1m": "load_1m", "thermal_state": "thermal_state"}
     async_add_entities(
         MacSensor(coordinator, desc)
         for desc in SENSORS
-        if desc.key != "battery" or "battery_level" in stats
+        if desc.key not in optional or optional[desc.key] in stats
     )
 
 

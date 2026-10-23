@@ -18,7 +18,7 @@ from .const import CONF_DEVICE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-REMEMBERED_DEVICE_KEYS = ("id", "name", "model", "os_version", "mac_address")
+REMEMBERED_DEVICE_KEYS = ("id", "name", "model", "manufacturer", "platform", "os_name", "os_version", "mac_address")
 
 
 class MacBridgeCoordinator(DataUpdateCoordinator[dict[str, Any]]):

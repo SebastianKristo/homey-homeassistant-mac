@@ -1,6 +1,6 @@
 {
   "id": "no.kristo.macbridge",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": [
@@ -11,8 +11,8 @@
     "no": "Mac Bridge"
   },
   "description": {
-    "en": "Control and monitor your Mac",
-    "no": "Styr og overvåk Macen din"
+    "en": "Control and monitor your Mac or Windows PC",
+    "no": "Styr og overvåk Macen eller Windows-PC-en din"
   },
   "category": [
     "video"
@@ -145,36 +145,36 @@
       {
         "id": "wake",
         "title": {
-          "en": "Wake the Mac (Wake-on-LAN)",
-          "no": "Vekk Macen (Wake-on-LAN)"
+          "en": "Wake (Wake-on-LAN)",
+          "no": "Vekk (Wake-on-LAN)"
         },
         "titleFormatted": {
-          "en": "Wake the Mac (Wake-on-LAN)",
-          "no": "Vekk Macen (Wake-on-LAN)"
+          "en": "Wake (Wake-on-LAN)",
+          "no": "Vekk (Wake-on-LAN)"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
       {
         "id": "sleep",
         "title": {
-          "en": "Put the Mac to sleep",
-          "no": "Sett Macen i dvale"
+          "en": "Put to sleep",
+          "no": "Sett i dvale"
         },
         "titleFormatted": {
-          "en": "Put the Mac to sleep",
-          "no": "Sett Macen i dvale"
+          "en": "Put to sleep",
+          "no": "Sett i dvale"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -192,7 +192,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -210,7 +210,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -228,43 +228,43 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
       {
         "id": "restart",
         "title": {
-          "en": "Restart the Mac",
-          "no": "Start Macen på nytt"
+          "en": "Restart",
+          "no": "Start på nytt"
         },
         "titleFormatted": {
-          "en": "Restart the Mac",
-          "no": "Start Macen på nytt"
+          "en": "Restart",
+          "no": "Start på nytt"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
       {
         "id": "shutdown",
         "title": {
-          "en": "Shut down the Mac",
-          "no": "Slå av Macen"
+          "en": "Shut down",
+          "no": "Slå av"
         },
         "titleFormatted": {
-          "en": "Shut down the Mac",
-          "no": "Slå av Macen"
+          "en": "Shut down",
+          "no": "Slå av"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -282,7 +282,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -300,7 +300,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -318,7 +318,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
@@ -336,7 +336,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           },
           {
             "type": "text",
@@ -362,7 +362,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           },
           {
             "type": "text",
@@ -401,7 +401,7 @@
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           },
           {
             "type": "number",
@@ -418,28 +418,28 @@
       {
         "id": "went_offline",
         "title": {
-          "en": "Mac went offline",
-          "no": "Macen gikk offline"
+          "en": "Went offline",
+          "no": "Gikk offline"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       },
       {
         "id": "came_online",
         "title": {
-          "en": "Mac came online",
-          "no": "Macen kom online"
+          "en": "Came online",
+          "no": "Kom online"
         },
         "args": [
           {
             "type": "device",
             "name": "device",
-            "filter": "driver_id=mac_mini|macbook_pro"
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
           }
         ]
       }
@@ -654,6 +654,137 @@
         "small": "/drivers/macbook_pro/assets/images/small.png",
         "large": "/drivers/macbook_pro/assets/images/large.png",
         "xlarge": "/drivers/macbook_pro/assets/images/xlarge.png"
+      },
+      "pair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "repair": [
+        {
+          "id": "configure"
+        }
+      ],
+      "settings": [
+        {
+          "id": "host",
+          "type": "text",
+          "label": {
+            "en": "Host",
+            "no": "Vert"
+          },
+          "value": ""
+        },
+        {
+          "id": "port",
+          "type": "number",
+          "label": {
+            "en": "Port",
+            "no": "Port"
+          },
+          "value": 8765
+        },
+        {
+          "id": "token",
+          "type": "password",
+          "label": {
+            "en": "Token",
+            "no": "Token"
+          },
+          "value": ""
+        },
+        {
+          "id": "interval",
+          "type": "number",
+          "label": {
+            "en": "Polling interval (s)",
+            "no": "Oppdateringsintervall (s)"
+          },
+          "value": 10,
+          "min": 2,
+          "max": 600
+        }
+      ]
+    },
+    {
+      "id": "windows_pc",
+      "name": {
+        "en": "Windows PC",
+        "no": "Windows-PC"
+      },
+      "class": "speaker",
+      "capabilities": [
+        "onoff",
+        "speaker_playing",
+        "speaker_prev",
+        "speaker_next",
+        "speaker_track",
+        "speaker_artist",
+        "speaker_album",
+        "volume_set",
+        "volume_mute",
+        "measure_cpu",
+        "measure_memory",
+        "measure_disk",
+        "measure_disk_free",
+        "measure_battery",
+        "button.wake",
+        "button.sleep",
+        "button.restart",
+        "button.shutdown"
+      ],
+      "capabilitiesOptions": {
+        "onoff": {
+          "title": {
+            "en": "Awake",
+            "no": "Våken"
+          }
+        },
+        "button.wake": {
+          "title": {
+            "en": "Wake",
+            "no": "Vekk"
+          },
+          "maintenanceAction": false
+        },
+        "button.sleep": {
+          "title": {
+            "en": "Sleep",
+            "no": "Dvale"
+          },
+          "maintenanceAction": false
+        },
+        "button.restart": {
+          "title": {
+            "en": "Restart",
+            "no": "Start på nytt"
+          },
+          "maintenanceAction": false
+        },
+        "button.shutdown": {
+          "title": {
+            "en": "Shut down",
+            "no": "Slå av"
+          },
+          "maintenanceAction": false
+        }
+      },
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "discovery": "macbridge",
+      "images": {
+        "small": "/drivers/windows_pc/assets/images/small.png",
+        "large": "/drivers/windows_pc/assets/images/large.png",
+        "xlarge": "/drivers/windows_pc/assets/images/xlarge.png"
       },
       "pair": [
         {

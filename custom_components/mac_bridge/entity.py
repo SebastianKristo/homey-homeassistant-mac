@@ -20,14 +20,16 @@ class MacBridgeEntity(CoordinatorEntity[MacBridgeCoordinator]):
         super().__init__(coordinator)
         unique_id = coordinator.config_entry.unique_id
         device = coordinator.data.get("device") or coordinator.config_entry.data.get(CONF_DEVICE) or {}
+        # MacBridge for Windows reports platform "windows"; Macs predate the field.
+        windows = device.get("platform") == "windows"
         self._attr_unique_id = f"{unique_id}_{key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, unique_id)},
             connections={(CONNECTION_NETWORK_MAC, mac)} if (mac := device.get("mac_address")) else set(),
             name=device.get("name", "Mac"),
-            manufacturer="Apple",
+            manufacturer=device.get("manufacturer") or ("Apple" if not windows else None),
             model=device.get("model"),
-            sw_version=f"macOS {device.get('os_version', '')}",
+            sw_version=f"{device.get('os_name') or ('Windows' if windows else 'macOS')} {device.get('os_version', '')}",
         )
 
     @property

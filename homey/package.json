@@ -1,7 +1,7 @@
 {
   "name": "no.kristo.macbridge",
-  "version": "1.1.2",
-  "description": "Control and monitor your Mac from Homey",
+  "version": "1.2.0",
+  "description": "Control and monitor your Mac or Windows PC from Homey",
   "main": "app.js",
   "license": "MIT",
   "engines": {
