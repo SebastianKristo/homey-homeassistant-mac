@@ -20,7 +20,8 @@
     },
     "error": {
       "cannot_connect": "Could not connect to the Mac. Is MacBridge running?",
-      "invalid_auth": "Invalid token"
+      "invalid_auth": "Invalid token",
+      "outdated_mac_app": "MacBridge on the Mac is an old version. Quit it from the menu bar and open version 1.1 or newer."
     },
     "abort": {
       "already_configured": "This Mac is already configured",

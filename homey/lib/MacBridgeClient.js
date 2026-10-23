@@ -15,6 +15,20 @@ function safeEqual(a, b) {
   return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
 }
 
+const AUTH_ERRORS = {
+  wrong_token: 'Invalid token',
+  clock_skew: 'The clocks on Homey and the Mac differ by more than a minute',
+  replayed_request: 'Request rejected as a replay, try again',
+};
+
+/** Turns the Mac's 401 answer into a helpful message. */
+function authErrorMessage(raw) {
+  let body = {};
+  try { body = JSON.parse(raw.toString('utf8')); } catch (err) { /* ignore */ }
+  if (!body.protocol) return 'MacBridge on the Mac is an old version. Quit it from the menu bar and open the new version';
+  return AUTH_ERRORS[body.reason] || 'Invalid token';
+}
+
 /**
  * HTTP client for the MacBridge app.
  *
@@ -60,8 +74,8 @@ class MacBridgeClient {
           chunks.push(chunk);
         });
         res.on('end', () => {
-          if (res.statusCode === 401) return reject(new Error('Invalid token'));
           const raw = Buffer.concat(chunks);
+          if (res.statusCode === 401) return reject(new Error(authErrorMessage(raw)));
           const expected = sign(this.token, `MacBridge-v1-response\n${nonce}\n${res.statusCode}\n${sha256(raw)}`);
           if (!safeEqual(res.headers['x-macbridge-signature'] || '', expected)) {
             return reject(new Error('Response not signed by this Mac'));

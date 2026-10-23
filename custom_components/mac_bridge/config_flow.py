@@ -12,7 +12,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
-from .api import MacBridgeAuthError, MacBridgeClient, MacBridgeError
+from .api import MacBridgeAuthError, MacBridgeClient, MacBridgeError, MacBridgeOutdatedError
 from .const import CONF_DEVICE, CONF_SCAN_INTERVAL, DEFAULT_PORT, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 
@@ -39,6 +39,8 @@ class MacBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
             except MacBridgeAuthError:
                 errors["base"] = "invalid_auth"
+            except MacBridgeOutdatedError:
+                errors["base"] = "outdated_mac_app"
             except MacBridgeError:
                 errors["base"] = "cannot_connect"
             else:
@@ -97,6 +99,8 @@ class MacBridgeConfigFlow(ConfigFlow, domain=DOMAIN):
                 await self._validate(entry.data[CONF_HOST], entry.data[CONF_PORT], user_input[CONF_TOKEN])
             except MacBridgeAuthError:
                 errors["base"] = "invalid_auth"
+            except MacBridgeOutdatedError:
+                errors["base"] = "outdated_mac_app"
             except MacBridgeError:
                 errors["base"] = "cannot_connect"
             else:
