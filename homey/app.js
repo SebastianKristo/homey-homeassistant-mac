@@ -15,6 +15,15 @@ class MacBridgeApp extends Homey.App {
       });
     }
 
+    this.homey.flow.getActionCard('notify_buttons')
+      .registerRunListener(async ({ device, title, message, buttons }) => device.notifyWithButtons({ title, message, buttons }));
+
+    const conditions = { is_locked: 'mac_locked', microphone_active: 'mac_microphone_active', webcam_active: 'mac_webcam_active' };
+    for (const [id, capability] of Object.entries(conditions)) {
+      this.homey.flow.getConditionCard(id)
+        .registerRunListener(async ({ device }) => device.hasCapability(capability) && device.getCapabilityValue(capability) === true);
+    }
+
     this.homey.flow.getDeviceTriggerCard('cpu_above')
       .registerRunListener(async ({ threshold }, { cpu, previous }) => cpu > threshold && previous <= threshold);
 

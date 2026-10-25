@@ -69,6 +69,22 @@ final class Config {
         set { defaults.set(newValue, forKey: "allowSpeechAndNotifications") }
     }
 
+    /// Opt-in: report names of connected Bluetooth devices (macOS asks for Bluetooth permission).
+    var reportBluetoothDevices: Bool {
+        get { defaults.bool(forKey: "reportBluetoothDevices") }
+        set { defaults.set(newValue, forKey: "reportBluetoothDevices") }
+    }
+
+    /// App/process names whose running state is reported. Chosen locally in the menu bar only;
+    /// nothing on the network can change this list.
+    var watchedProcesses: [String] {
+        get { defaults.stringArray(forKey: "watchedProcesses") ?? [] }
+        set {
+            let clean = newValue.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty && $0.count <= 100 }
+            defaults.set(Array(clean.prefix(20)), forKey: "watchedProcesses")
+        }
+    }
+
     private static func generateToken() -> String {
         var bytes = [UInt8](repeating: 0, count: 32)
         let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)

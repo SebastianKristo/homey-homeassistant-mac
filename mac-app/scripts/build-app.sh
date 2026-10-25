@@ -26,6 +26,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>LSUIElement</key><true/>
     <key>NSAppleEventsUsageDescription</key>
     <string>MacBridge controls playback in Music and Spotify, and restart/shutdown, when Home Assistant or Homey asks it to.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>MacBridge reports which Bluetooth devices are connected, if you turn that on in the menu.</string>
     <key>NSLocalNetworkUsageDescription</key>
     <string>MacBridge serves an API on your local network for Home Assistant and Homey.</string>
     <key>NSBonjourServices</key>

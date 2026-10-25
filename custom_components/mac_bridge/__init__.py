@@ -12,7 +12,7 @@ from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TOKEN, Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
-from homeassistant.helpers import config_validation as cv, device_registry as dr
+from homeassistant.helpers import config_validation as cv, device_registry as dr, discovery
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 import voluptuous as vol
@@ -34,6 +34,18 @@ type MacBridgeConfigEntry = ConfigEntry[MacBridgeCoordinator]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
+# Notification buttons: at most 4; "uri" (http/https only) is opened when the button is clicked.
+NOTIFY_ACTIONS = vol.All(
+    [
+        {
+            vol.Required("action"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Optional("title"): vol.All(str, vol.Length(max=40)),
+            vol.Optional("uri"): vol.All(cv.url, vol.Length(max=2000)),
+        }
+    ],
+    vol.Length(max=4),
+)
+
 SERVICE_SCHEMA = vol.Schema(
     {
         vol.Required("device_id"): cv.string,
@@ -43,7 +55,12 @@ SERVICE_SCHEMA = vol.Schema(
             int,
             float,
             bool,
-            {vol.Optional("title"): vol.All(str, vol.Length(max=100)), vol.Required("message"): vol.All(str, vol.Length(max=500))},
+            {
+                vol.Optional("title"): vol.All(str, vol.Length(max=100)),
+                vol.Required("message"): vol.All(str, vol.Length(max=500)),
+                vol.Optional("data"): {vol.Optional("actions"): NOTIFY_ACTIONS},
+            },
+            {vol.Required("url"): vol.All(str, vol.Length(max=2000)), vol.Optional("volume"): vol.Coerce(float)},
         ),
     }
 )
@@ -111,7 +128,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: MacBridgeConfigEntry) ->
             return web.Response(status=400)
         if not isinstance(data, dict) or not isinstance(data.get("device"), dict):
             return web.Response(status=400)
-        coordinator.remember_device(data)
+        coordinator.ingest(data)
         coordinator.async_set_updated_data(data)
         return web.Response(status=200)
 
@@ -135,6 +152,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: MacBridgeConfigEntry) ->
     entry.async_on_unload(entry.add_update_listener(_async_reload))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # notify.<computer name>, with optional buttons (legacy notify services support "data").
+    hass.async_create_task(
+        discovery.async_load_platform(
+            hass, Platform.NOTIFY, DOMAIN, {"entry_id": entry.entry_id, "name": entry.title}, {}
+        )
+    )
     return True
 
 

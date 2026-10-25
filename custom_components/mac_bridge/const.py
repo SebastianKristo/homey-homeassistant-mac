@@ -29,4 +29,10 @@ COMMANDS = [
     "shutdown",
     "say",
     "notify",
+    "play_audio",
+    "stop_audio",
 ]
+
+# Bus events fired when the computer reports something happened.
+EVENT_NOTIFICATION_ACTION = "mac_bridge_notification_action"
+EVENT_STATE_CHANGE = "mac_bridge_state_change"

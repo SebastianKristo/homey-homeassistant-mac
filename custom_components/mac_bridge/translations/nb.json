@@ -44,6 +44,21 @@
       },
       "charging": {
         "name": "Lader"
+      },
+      "session_locked": {
+        "name": "Låst"
+      },
+      "display_on": {
+        "name": "Skjerm på"
+      },
+      "microphone_active": {
+        "name": "Mikrofon i bruk"
+      },
+      "webcam_active": {
+        "name": "Kamera i bruk"
+      },
+      "process": {
+        "name": "{name} kjører"
       }
     },
     "button": {
@@ -126,6 +141,79 @@
       },
       "media_title": {
         "name": "Spilles nå"
+      },
+      "active_app": {
+        "name": "Aktiv app"
+      },
+      "last_active": {
+        "name": "Sist aktiv"
+      },
+      "idle_time": {
+        "name": "Inaktiv tid"
+      },
+      "logged_user": {
+        "name": "Innlogget bruker"
+      },
+      "logged_users": {
+        "name": "Innloggede brukere"
+      },
+      "gpu_usage": {
+        "name": "GPU-bruk"
+      },
+      "cpu_clock": {
+        "name": "CPU-klokkefrekvens"
+      },
+      "microphone_apps": {
+        "name": "Apper som bruker mikrofonen"
+      },
+      "webcam_apps": {
+        "name": "Apper som bruker kameraet"
+      },
+      "audio_output": {
+        "name": "Lydutgang"
+      },
+      "audio_input": {
+        "name": "Lydinngang"
+      },
+      "displays": {
+        "name": "Skjermer"
+      },
+      "accent_color": {
+        "name": "Aksentfarge"
+      },
+      "printers": {
+        "name": "Skrivere"
+      },
+      "ip_address": {
+        "name": "IP-adresse"
+      },
+      "bluetooth_devices": {
+        "name": "Bluetooth-enheter"
+      },
+      "bluetooth_le_devices": {
+        "name": "Bluetooth LE-enheter"
+      },
+      "windows_updates": {
+        "name": "Ventende Windows-oppdateringer"
+      },
+      "last_state_change": {
+        "name": "Siste systemendring"
+      },
+      "service": {
+        "name": "Tjeneste {name}"
+      },
+      "notification_state": {
+        "name": "Varslingsstatus",
+        "state": {
+          "not_present": "Ikke til stede",
+          "busy": "Opptatt",
+          "fullscreen_game": "Spill i fullskjerm",
+          "presentation": "Presentasjon",
+          "accepts_notifications": "Tar imot varsler",
+          "quiet_time": "Stille tid",
+          "fullscreen_app": "App i fullskjerm",
+          "unknown": "Ukjent"
+        }
       }
     }
   },

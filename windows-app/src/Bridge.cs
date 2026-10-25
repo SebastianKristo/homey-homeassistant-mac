@@ -9,6 +9,10 @@ sealed class Bridge : IDisposable
 {
     private readonly SystemStats stats = new();
     private readonly MediaController media = new();
+    public Sensors Sensors { get; } = new();
+    public EventLog Events { get; } = new();
+    private readonly Notifier notifier;
+    private readonly AudioPlayer audio = new();
     private readonly Config config = Config.Shared;
     private readonly object stateGate = new();
     private readonly NonceCache nonces = new();
@@ -33,8 +37,18 @@ sealed class Bridge : IDisposable
         "play_pause", "play", "pause", "next", "previous",
         "set_volume", "volume_up", "volume_down", "mute", "unmute", "set_mute",
         "sleep", "display_sleep", "wake", "wake_display", "lock", "restart", "shutdown",
-        "say", "notify",
+        "say", "notify", "play_audio", "stop_audio",
     };
+
+    public Bridge()
+    {
+        notifier = new Notifier(Events);
+        Sensors.OnStateChange = state =>
+        {
+            Events.Add("state_change", new() { ["state"] = state });
+            _ = Task.Run(() => Push(Status()));
+        };
+    }
 
     // Status
 
@@ -50,6 +64,8 @@ sealed class Bridge : IDisposable
                 ["volume"] = volume.Level,
                 ["muted"] = volume.Muted,
                 ["media"] = media.NowPlaying(),
+                ["sensors"] = Sensors.Snapshot(),
+                ["events"] = Events.Recent,
                 ["commands"] = Commands,
                 ["power_commands"] = config.AllowPowerCommands,
                 ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
@@ -142,7 +158,7 @@ sealed class Bridge : IDisposable
                 }
                 try
                 {
-                    Execute(command, value);
+                    Execute(command, value, request.RemoteHost);
                 }
                 catch (CommandException e)
                 {
@@ -163,7 +179,7 @@ sealed class Bridge : IDisposable
         public int Status { get; } = status;
     }
 
-    public void Execute(string command, JsonElement? value)
+    public void Execute(string command, JsonElement? value, string requester)
     {
         if (!Commands.Contains(command)) throw new CommandException("unknown command", 400);
         Trace.WriteLine($"MacBridge command: {command}");
@@ -206,14 +222,48 @@ sealed class Bridge : IDisposable
                 if (!config.AllowSpeechAndNotifications)
                     throw new CommandException("notifications are turned off in MacBridge", 403);
                 string message = "", title = "Home";
+                JsonElement? actions = null;
                 if (value is { ValueKind: JsonValueKind.String } plain) message = plain.GetString() ?? "";
                 if (value is { ValueKind: JsonValueKind.Object } dict)
                 {
                     if (dict.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String) message = m.GetString() ?? "";
                     if (dict.TryGetProperty("title", out var t) && t.ValueKind == JsonValueKind.String) title = t.GetString() ?? title;
+                    if (dict.TryGetProperty("data", out var d) && d.ValueKind == JsonValueKind.Object
+                        && d.TryGetProperty("actions", out var nested)) actions = nested;
+                    else if (dict.TryGetProperty("actions", out var direct)) actions = direct;
                 }
                 if (message.Length == 0) throw new CommandException("message required", 400);
-                SystemControl.Notify(title, message);
+                notifier.Show(title, message, Notifier.ParseActions(actions));
+                break;
+            case "play_audio":
+                if (!config.AllowSpeechAndNotifications)
+                    throw new CommandException("audio is turned off in MacBridge", 403);
+                string? url = value switch
+                {
+                    { ValueKind: JsonValueKind.String } u => u.GetString(),
+                    { ValueKind: JsonValueKind.Object } o when o.TryGetProperty("url", out var u) && u.ValueKind == JsonValueKind.String => u.GetString(),
+                    _ => null,
+                };
+                if (string.IsNullOrEmpty(url)) throw new CommandException("url required", 400);
+                double? volume = value is { ValueKind: JsonValueKind.Object } options
+                    && options.TryGetProperty("volume", out var vol) && vol.TryGetDouble(out var audioVolume) ? audioVolume : null;
+                try
+                {
+                    audio.Play(url, requester, volume);
+                }
+                catch (AudioPlayer.NotAllowedException)
+                {
+                    throw new CommandException("audio url must point to the computer that sent the request", 403);
+                }
+                catch (Exception e) when (e is IOException or HttpRequestException or TaskCanceledException
+                                              or System.Runtime.InteropServices.COMException)
+                {
+                    Trace.WriteLine($"MacBridge: play_audio failed: {e.Message}");
+                    throw new CommandException("could not play audio", 422);
+                }
+                break;
+            case "stop_audio":
+                audio.Stop();
                 break;
             default:
                 throw new CommandException("unknown command", 400);
@@ -276,5 +326,10 @@ sealed class Bridge : IDisposable
         }
     }
 
-    public void Dispose() => pushTimer?.Dispose();
+    public void Dispose()
+    {
+        pushTimer?.Dispose();
+        Sensors.Dispose();
+        audio.Dispose();
+    }
 }

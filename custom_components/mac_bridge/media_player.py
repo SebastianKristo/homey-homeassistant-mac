@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from homeassistant.components import media_source
 from homeassistant.components.media_player import (
+    BrowseMedia,
     MediaPlayerDeviceClass,
     MediaPlayerEntity,
     MediaPlayerEntityFeature,
     MediaPlayerState,
     MediaType,
+    async_process_play_media_url,
 )
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
@@ -44,6 +50,9 @@ class MacMediaPlayer(MacBridgeEntity, MediaPlayerEntity):
         | MediaPlayerEntityFeature.VOLUME_STEP
         | MediaPlayerEntityFeature.TURN_OFF
         | MediaPlayerEntityFeature.TURN_ON
+        | MediaPlayerEntityFeature.PLAY_MEDIA
+        | MediaPlayerEntityFeature.BROWSE_MEDIA
+        | MediaPlayerEntityFeature.MEDIA_ANNOUNCE
     )
 
     def __init__(self, coordinator) -> None:
@@ -140,6 +149,27 @@ class MacMediaPlayer(MacBridgeEntity, MediaPlayerEntity):
 
     async def async_volume_down(self) -> None:
         await self.coordinator.async_command("volume_down")
+
+    async def async_play_media(self, media_type: MediaType | str, media_id: str, **kwargs: Any) -> None:
+        """Play an audio clip (e.g. text-to-speech) from Home Assistant on the computer.
+
+        The computer only downloads from the address the request came from, i.e. this
+        Home Assistant, so the URL must be served by Home Assistant itself.
+        """
+        if media_source.is_media_source_id(media_id):
+            item = await media_source.async_resolve_media(self.hass, media_id, self.entity_id)
+            media_id = item.url
+        elif not media_id.startswith("/"):
+            raise HomeAssistantError("Only media from Home Assistant (media source or TTS) can be played")
+        url = async_process_play_media_url(self.hass, media_id)
+        await self.coordinator.async_command("play_audio", {"url": url})
+
+    async def async_browse_media(
+        self, media_content_type: MediaType | str | None = None, media_content_id: str | None = None
+    ) -> BrowseMedia:
+        return await media_source.async_browse_media(
+            self.hass, media_content_id, content_filter=lambda item: item.media_content_type.startswith("audio/")
+        )
 
     async def async_turn_off(self) -> None:
         await self.coordinator.async_command("sleep")
