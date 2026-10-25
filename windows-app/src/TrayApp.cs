@@ -14,6 +14,7 @@ sealed class TrayApp : ApplicationContext
     private HttpServer? server;
     private MdnsAdvertiser? advertiser;
     private System.Windows.Forms.Timer? clipboardClearTimer;
+    private readonly DisplayWatcher displayWatcher;
 
     public TrayApp()
     {
@@ -30,6 +31,7 @@ sealed class TrayApp : ApplicationContext
         Populate();
         SystemControl.ShowNotification = (title, message) => ui.Post(_ =>
             trayIcon.ShowBalloonTip(5000, title, message, ToolTipIcon.None), null);
+        displayWatcher = new DisplayWatcher(bridge.Sensors.SetDisplayState);
         config.RefreshStartWithWindows();
         StartServer();
         bridge.StartPushing();
@@ -85,6 +87,10 @@ sealed class TrayApp : ApplicationContext
         menu.Items.Add(Toggle("Allow restart/shutdown", config.AllowPowerCommands, () => config.AllowPowerCommands = !config.AllowPowerCommands));
         menu.Items.Add(Toggle("Allow speech and notifications", config.AllowSpeechAndNotifications,
             () => config.AllowSpeechAndNotifications = !config.AllowSpeechAndNotifications));
+        menu.Items.Add(Toggle("Report Bluetooth devices", config.ReportBluetoothDevices,
+            () => config.ReportBluetoothDevices = !config.ReportBluetoothDevices));
+        menu.Items.Add(Item("Watched programs…", EditWatchedProcesses));
+        menu.Items.Add(Item("Watched services…", EditWatchedServices));
         menu.Items.Add(Toggle("Start with Windows", config.StartWithWindows, () => config.StartWithWindows = !config.StartWithWindows));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(Item("Quit", Quit));
@@ -184,6 +190,20 @@ sealed class TrayApp : ApplicationContext
         if (rejected.Length > 0) Alert($"Ignored (must be http:// or https://): {string.Join(", ", rejected)}");
     }
 
+    private void EditWatchedProcesses()
+    {
+        if (InputDialog.Show("Programs to report as running/not running (comma separated, max 20), e.g. steam, zoom, obs64",
+                string.Join(", ", config.WatchedProcesses)) is not { } value) return;
+        config.WatchedProcesses = value.Split(',');
+    }
+
+    private void EditWatchedServices()
+    {
+        if (InputDialog.Show("Windows services to report the state of (service names, comma separated, max 20), e.g. Spooler, wuauserv",
+                string.Join(", ", config.WatchedServices)) is not { } value) return;
+        config.WatchedServices = value.Split(',');
+    }
+
     private void Quit()
     {
         trayIcon.Visible = false;
@@ -196,6 +216,7 @@ sealed class TrayApp : ApplicationContext
         {
             advertiser?.Dispose();
             server?.Dispose();
+            displayWatcher.Dispose();
             bridge.Dispose();
             trayIcon.Dispose();
             menu.Dispose();
@@ -207,4 +228,35 @@ sealed class TrayApp : ApplicationContext
     private static void Alert(string text) =>
         MessageBox.Show(text, "MacBridge", MessageBoxButtons.OK, MessageBoxIcon.Information,
             MessageBoxDefaultButton.Button1, MessageBoxOptions.DefaultDesktopOnly);
+}
+
+/// <summary>Hidden window that receives display on/off notifications from Windows.</summary>
+sealed class DisplayWatcher : NativeWindow, IDisposable
+{
+    private readonly Action<int> onChange;
+    private IntPtr registration;
+
+    public DisplayWatcher(Action<int> onChange)
+    {
+        this.onChange = onChange;
+        CreateHandle(new CreateParams());
+        registration = Native.RegisterPowerSettingNotification(Handle, ref Native.GUID_CONSOLE_DISPLAY_STATE, 0);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        if (m.Msg == Native.WM_POWERBROADCAST && m.WParam == Native.PBT_POWERSETTINGCHANGE && m.LParam != IntPtr.Zero)
+        {
+            // POWERBROADCAST_SETTING: GUID (16 bytes), DataLength (4), Data (DWORD for the display state).
+            onChange(System.Runtime.InteropServices.Marshal.ReadInt32(m.LParam, 20));
+        }
+        base.WndProc(ref m);
+    }
+
+    public void Dispose()
+    {
+        if (registration != IntPtr.Zero) Native.UnregisterPowerSettingNotification(registration);
+        registration = IntPtr.Zero;
+        DestroyHandle();
+    }
 }

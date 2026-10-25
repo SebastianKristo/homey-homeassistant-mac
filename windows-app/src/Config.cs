@@ -92,6 +92,43 @@ sealed class Config
         set => WriteInt("AllowSpeechAndNotifications", value ? 1 : 0);
     }
 
+    /// <summary>Opt-in: report names of connected Bluetooth devices.</summary>
+    public bool ReportBluetoothDevices
+    {
+        get => ReadInt("ReportBluetoothDevices", 0) != 0;
+        set => WriteInt("ReportBluetoothDevices", value ? 1 : 0);
+    }
+
+    /// <summary>
+    /// Program names (e.g. "steam", "zoom") whose running state is reported. Chosen locally in the
+    /// tray menu only; nothing on the network can change this list.
+    /// </summary>
+    public string[] WatchedProcesses
+    {
+        get => ReadList("WatchedProcesses");
+        set => WriteList("WatchedProcesses", value);
+    }
+
+    /// <summary>Windows service names whose state is reported. Chosen locally in the tray menu only.</summary>
+    public string[] WatchedServices
+    {
+        get => ReadList("WatchedServices");
+        set => WriteList("WatchedServices", value);
+    }
+
+    private static string[] ReadList(string name)
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(KeyPath);
+        return key?.GetValue(name) as string[] ?? Array.Empty<string>();
+    }
+
+    private static void WriteList(string name, IEnumerable<string> values)
+    {
+        var clean = values.Select(v => v.Trim()).Where(v => v.Length is > 0 and <= 100).Take(20).ToArray();
+        using var key = Registry.CurrentUser.CreateSubKey(KeyPath);
+        key.SetValue(name, clean, RegistryValueKind.MultiString);
+    }
+
     /// <summary>Start MacBridge when the user signs in (HKCU Run key, no admin rights needed).</summary>
     public bool StartWithWindows
     {
