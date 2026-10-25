@@ -10,11 +10,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import MacBridgeAuthError, MacBridgeClient, MacBridgeError, async_wake_on_lan
-from .const import CONF_DEVICE, DOMAIN
+from .const import CONF_DEVICE, DOMAIN, EVENT_NOTIFICATION_ACTION, EVENT_STATE_CHANGE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,6 +36,8 @@ class MacBridgeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(seconds=interval),
         )
         self.client = client
+        # Highest event id already handled; None until the first status (older events are not replayed).
+        self._last_event_id: int | None = None
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
@@ -48,8 +51,38 @@ class MacBridgeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if cached := self.config_entry.data.get(CONF_DEVICE):
                 return {"device": cached, "online": False}
             raise UpdateFailed(str(err)) from err
-        self.remember_device(data)
+        self.ingest(data)
         return data
+
+    @callback
+    def ingest(self, data: dict[str, Any]) -> None:
+        """Handle a fresh status, however it arrived (poll, push or command reply)."""
+        self.remember_device(data)
+        self._fire_new_events(data.get("events"))
+
+    @callback
+    def _fire_new_events(self, events: Any) -> None:
+        """Turn new events from the computer (notification buttons, sleep/wake, …) into bus events."""
+        if not isinstance(events, list):
+            return
+        valid = [e for e in events if isinstance(e, dict) and isinstance(e.get("id"), int)]
+        newest = max((e["id"] for e in valid), default=None)
+        if self._last_event_id is None:
+            self._last_event_id = newest if newest is not None else 0
+            return
+        device = dr.async_get(self.hass).async_get_device(identifiers={(DOMAIN, self.config_entry.unique_id)})
+        base = {"device_id": device.id if device else None, "name": self.config_entry.title}
+        for event in sorted(valid, key=lambda e: e["id"]):
+            if event["id"] <= self._last_event_id:
+                continue
+            self._last_event_id = event["id"]
+            if event.get("type") == "notification_action" and isinstance(event.get("action"), str):
+                self.hass.bus.async_fire(
+                    EVENT_NOTIFICATION_ACTION,
+                    {**base, "action": event["action"][:64], "title": str(event.get("title", ""))[:100]},
+                )
+            elif event.get("type") == "state_change" and isinstance(event.get("state"), str):
+                self.hass.bus.async_fire(EVENT_STATE_CHANGE, {**base, "state": event["state"][:32]})
 
     @callback
     def remember_device(self, data: dict[str, Any]) -> None:
@@ -74,7 +107,7 @@ class MacBridgeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except MacBridgeError as err:
             raise HomeAssistantError(f"Command {command} failed: {err}") from err
         if status := result.get("status"):
-            self.remember_device(status)
+            self.ingest(status)
             self.async_set_updated_data(status)
 
     async def async_wake(self) -> None:

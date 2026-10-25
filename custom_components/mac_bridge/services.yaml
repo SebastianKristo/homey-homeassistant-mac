@@ -30,6 +30,8 @@ send_command:
             - shutdown
             - say
             - notify
+            - play_audio
+            - stop_audio
     value:
       example: "Hello from Home Assistant"
       selector:

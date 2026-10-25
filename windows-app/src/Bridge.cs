@@ -246,7 +246,7 @@ sealed class Bridge : IDisposable
                 };
                 if (string.IsNullOrEmpty(url)) throw new CommandException("url required", 400);
                 double? volume = value is { ValueKind: JsonValueKind.Object } options
-                    && options.TryGetProperty("volume", out var vol) && vol.TryGetDouble(out var level) ? level : null;
+                    && options.TryGetProperty("volume", out var vol) && vol.TryGetDouble(out var audioVolume) ? audioVolume : null;
                 try
                 {
                     audio.Play(url, requester, volume);

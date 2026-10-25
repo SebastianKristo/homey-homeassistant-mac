@@ -44,6 +44,21 @@
       },
       "charging": {
         "name": "Charging"
+      },
+      "session_locked": {
+        "name": "Locked"
+      },
+      "display_on": {
+        "name": "Display on"
+      },
+      "microphone_active": {
+        "name": "Microphone in use"
+      },
+      "webcam_active": {
+        "name": "Webcam in use"
+      },
+      "process": {
+        "name": "{name} running"
       }
     },
     "button": {
@@ -126,6 +141,79 @@
       },
       "media_title": {
         "name": "Now playing"
+      },
+      "active_app": {
+        "name": "Active app"
+      },
+      "last_active": {
+        "name": "Last active"
+      },
+      "idle_time": {
+        "name": "Idle time"
+      },
+      "logged_user": {
+        "name": "Logged in user"
+      },
+      "logged_users": {
+        "name": "Logged in users"
+      },
+      "gpu_usage": {
+        "name": "GPU usage"
+      },
+      "cpu_clock": {
+        "name": "CPU clock speed"
+      },
+      "microphone_apps": {
+        "name": "Apps using microphone"
+      },
+      "webcam_apps": {
+        "name": "Apps using webcam"
+      },
+      "audio_output": {
+        "name": "Audio output"
+      },
+      "audio_input": {
+        "name": "Audio input"
+      },
+      "displays": {
+        "name": "Displays"
+      },
+      "accent_color": {
+        "name": "Accent color"
+      },
+      "printers": {
+        "name": "Printers"
+      },
+      "ip_address": {
+        "name": "IP address"
+      },
+      "bluetooth_devices": {
+        "name": "Bluetooth devices"
+      },
+      "bluetooth_le_devices": {
+        "name": "Bluetooth LE devices"
+      },
+      "windows_updates": {
+        "name": "Pending Windows updates"
+      },
+      "last_state_change": {
+        "name": "Last system state change"
+      },
+      "service": {
+        "name": "Service {name}"
+      },
+      "notification_state": {
+        "name": "Notification state",
+        "state": {
+          "not_present": "Not present",
+          "busy": "Busy",
+          "fullscreen_game": "Full-screen game",
+          "presentation": "Presentation",
+          "accepts_notifications": "Accepts notifications",
+          "quiet_time": "Quiet time",
+          "fullscreen_app": "Full-screen app",
+          "unknown": "Unknown"
+        }
       }
     }
   },
