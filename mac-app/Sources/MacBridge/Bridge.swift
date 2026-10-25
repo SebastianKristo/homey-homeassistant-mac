@@ -4,6 +4,10 @@ import Foundation
 final class Bridge {
     private let stats = SystemStats()
     private let media = MediaController()
+    let sensors = Sensors()
+    let events = EventLog()
+    private(set) lazy var notifier = Notifier(events: events)
+    private let audio = AudioPlayer()
     private let config = Config.shared
     private let stateLock = NSLock()
     private let nonces = NonceCache()
@@ -23,8 +27,19 @@ final class Bridge {
         "play_pause", "play", "pause", "next", "previous",
         "set_volume", "volume_up", "volume_down", "mute", "unmute", "set_mute",
         "sleep", "display_sleep", "wake", "wake_display", "lock", "restart", "shutdown",
-        "say", "notify",
+        "say", "notify", "play_audio", "stop_audio",
     ]
+
+    /// Call once on the main thread at launch.
+    func start() {
+        _ = notifier
+        sensors.onStateChange = { [weak self] state in
+            guard let self else { return }
+            self.events.add("state_change", ["state": state])
+            DispatchQueue.global().async { self.push(self.status()) }
+        }
+        sensors.startObserving()
+    }
 
     // MARK: Status
 
@@ -37,6 +52,8 @@ final class Bridge {
             "volume": volume.level,
             "muted": volume.muted,
             "media": media.nowPlaying(),
+            "sensors": sensors.snapshot(),
+            "events": events.recent,
             "commands": Self.commands,
             "power_commands": config.allowPowerCommands,
             "timestamp": Int(Date().timeIntervalSince1970),
@@ -105,7 +122,7 @@ final class Bridge {
                   let command = body["command"] as? String
             else { return .error("body must be JSON: {\"command\": ..., \"value\": ...}", status: 400) }
             do {
-                try execute(command, value: body["value"])
+                try execute(command, value: body["value"], requester: request.remoteHost)
             } catch let error as CommandError {
                 return .error(error.message, status: error.status)
             } catch {
@@ -126,7 +143,7 @@ final class Bridge {
         let status: Int
     }
 
-    func execute(_ command: String, value: Any?) throws {
+    func execute(_ command: String, value: Any?, requester: String) throws {
         guard Self.commands.contains(command) else {
             throw CommandError(message: "unknown command", status: 400)
         }
@@ -169,7 +186,27 @@ final class Bridge {
             let dict = value as? [String: Any]
             let message = (dict?["message"] as? String) ?? (value as? String) ?? ""
             guard !message.isEmpty else { throw CommandError(message: "message required", status: 400) }
-            SystemControl.notify(title: (dict?["title"] as? String) ?? "Home", message: message)
+            let extra = dict?["data"] as? [String: Any]
+            let actions = Notifier.parseActions(extra?["actions"] ?? dict?["actions"])
+            notifier.show(title: (dict?["title"] as? String) ?? "Home", message: message, actions: actions)
+        case "play_audio":
+            guard config.allowSpeechAndNotifications else {
+                throw CommandError(message: "audio is turned off in MacBridge", status: 403)
+            }
+            let dict = value as? [String: Any]
+            guard let url = (dict?["url"] as? String) ?? (value as? String) else {
+                throw CommandError(message: "url required", status: 400)
+            }
+            let volume = (dict?["volume"] as? NSNumber).map { $0.floatValue }
+            do {
+                try audio.play(url, requester: requester, volume: volume)
+            } catch AudioPlayer.Failure.notAllowed {
+                throw CommandError(message: "audio url must point to the computer that sent the request", status: 403)
+            } catch {
+                throw CommandError(message: "could not play audio", status: 422)
+            }
+        case "stop_audio":
+            audio.stop()
         default:
             throw CommandError(message: "unknown command", status: 400)
         }

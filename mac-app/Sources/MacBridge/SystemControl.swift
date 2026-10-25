@@ -72,14 +72,6 @@ enum SystemControl {
         }
     }
 
-    static func notify(title: String, message: String) {
-        // Text is passed as arguments, never spliced into the script.
-        Shell.osascript(
-            "display notification (item 1 of argv) with title (item 2 of argv)",
-            arguments: [clean(message, limit: 500), clean(title, limit: 100)]
-        )
-    }
-
     /// Strips control characters and caps the length of text from the network.
     static func clean(_ text: String, limit: Int) -> String {
         String(text.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }.prefix(limit).map(Character.init))

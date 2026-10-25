@@ -11,6 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "desktopcomputer", accessibilityDescription: "MacBridge")
         rebuildMenu()
+        bridge.start()
+        bridge.notifier.requestPermission()
         quitOtherInstances {
             self.startServer()
             self.bridge.startPushing()
@@ -85,6 +87,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let speech = item("Allow speech and notifications", #selector(toggleSpeech))
         speech.state = config.allowSpeechAndNotifications ? .on : .off
         menu.addItem(speech)
+        let bluetooth = item("Report Bluetooth devices", #selector(toggleBluetooth))
+        bluetooth.state = config.reportBluetoothDevices ? .on : .off
+        menu.addItem(bluetooth)
+        menu.addItem(item("Watched apps…", #selector(editWatchedProcesses)))
         menu.addItem(item("Request permissions", #selector(requestPermissions)))
         menu.addItem(.separator())
         menu.addItem(item("Quit", #selector(quit), key: "q"))
@@ -151,6 +157,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func togglePower() {
         config.allowPowerCommands.toggle()
         rebuildMenu()
+    }
+
+    @objc private func toggleBluetooth() {
+        config.reportBluetoothDevices.toggle()
+        rebuildMenu()
+    }
+
+    @objc private func editWatchedProcesses() {
+        guard let value = prompt("Apps to report as running/not running (comma separated, max 20), e.g. Zoom, Steam, Xcode",
+                                 value: config.watchedProcesses.joined(separator: ", ")) else { return }
+        config.watchedProcesses = value.split(separator: ",").map(String.init)
     }
 
     @objc private func toggleSpeech() {

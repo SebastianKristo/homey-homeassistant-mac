@@ -12,6 +12,11 @@ let package = Package(
                 .linkedFramework("IOKit"),
                 .linkedFramework("AppKit"),
                 .linkedFramework("Network"),
+                .linkedFramework("CoreAudio"),
+                .linkedFramework("CoreMediaIO"),
+                .linkedFramework("IOBluetooth"),
+                .linkedFramework("UserNotifications"),
+                .linkedFramework("AVFoundation"),
             ]
         )
     ]
