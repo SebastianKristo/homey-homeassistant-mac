@@ -96,7 +96,7 @@ enum SystemControl {
         return info
     }
 
-    static let appVersion = "1.2.0"
+    static let appVersion = "1.3.0"
 
     /// Stable, anonymous id for this Mac: a hash of the hardware serial, so the serial number
     /// itself is never shared (not in Bonjour, not in the API).

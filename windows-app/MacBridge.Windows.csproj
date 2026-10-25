@@ -11,7 +11,7 @@
     <AssemblyName>MacBridge</AssemblyName>
     <RootNamespace>MacBridge</RootNamespace>
     <Product>MacBridge for Windows</Product>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <ApplicationIcon>Resources\MacBridge.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationManifest>app.manifest</ApplicationManifest>
