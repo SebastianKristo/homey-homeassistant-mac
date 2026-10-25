@@ -5,5 +5,9 @@
   "1.2.0": {
     "en": "Windows PC support: new Windows PC device type for MacBridge for Windows. Flow cards work for both Mac and PC.",
     "no": "Støtte for Windows-PC: ny enhetstype Windows-PC for MacBridge for Windows. Flow-kortene fungerer for både Mac og PC."
+  },
+  "1.3.0": {
+    "en": "New sensors: active app, idle time, logged in user, locked, display on, microphone and webcam in use, GPU usage. Notifications with buttons and new flow cards.",
+    "no": "Nye sensorer: aktiv app, inaktiv tid, innlogget bruker, låst, skjerm på, mikrofon og kamera i bruk, GPU-bruk. Varsler med knapper og nye flow-kort."
   }
 }

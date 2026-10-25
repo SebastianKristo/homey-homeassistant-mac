@@ -11,9 +11,30 @@ const BUTTONS = {
   'button.shutdown': 'shutdown',
 };
 
+// Sensors from the computer's "sensors" section. A capability is added the first time the
+// computer reports the value, so older MacBridge versions don't show empty tiles.
+const SENSORS = {
+  mac_active_app: s => (typeof s.active_app === 'string' ? s.active_app : undefined),
+  mac_logged_user: s => (typeof s.logged_user === 'string' ? s.logged_user : undefined),
+  mac_idle_minutes: s => (typeof s.idle_seconds === 'number' ? Math.floor(s.idle_seconds / 60) : undefined),
+  measure_gpu: s => (typeof s.gpu_usage === 'number' ? s.gpu_usage : undefined),
+  mac_locked: s => (typeof s.session_locked === 'boolean' ? s.session_locked : undefined),
+  mac_display_on: s => (typeof s.display_on === 'boolean' ? s.display_on : undefined),
+  mac_microphone_active: s => (typeof s.microphone_active === 'boolean' ? s.microphone_active : undefined),
+  mac_webcam_active: s => (typeof s.webcam_active === 'boolean' ? s.webcam_active : undefined),
+};
+
+// Capability -> flow trigger fired when its value changes.
+const CHANGE_TRIGGERS = {
+  mac_locked: ['locked_changed', 'locked'],
+  mac_microphone_active: ['microphone_changed', 'active'],
+  mac_webcam_active: ['webcam_changed', 'active'],
+};
+
 class MacDevice extends Homey.Device {
   async onInit() {
     this.online = null;
+    this.lastEventId = null; // events older than the first status are not replayed
     for (const capability of Object.keys(BUTTONS)) {
       if (!this.hasCapability(capability)) await this.addCapability(capability).catch(this.error);
     }
@@ -121,12 +142,65 @@ class MacDevice extends Homey.Device {
     this.setCapability('measure_disk_free', stats.disk_free_gb);
     this.setCapability('measure_load', stats.load_1m);
     this.setCapability('mac_thermal_state', stats.thermal_state);
+    this.applySensors(status.sensors || {});
+    this.handleEvents(status.events);
 
     if (typeof stats.battery_level === 'number') {
       this.setCapability('measure_battery', stats.battery_level);
     } else if (this.hasCapability('measure_battery')) {
       this.removeCapability('measure_battery').catch(this.error); // desktop Mac
     }
+  }
+
+  applySensors(sensors) {
+    for (const [capability, read] of Object.entries(SENSORS)) {
+      const value = read(sensors);
+      if (value === undefined) continue;
+      if (!this.hasCapability(capability)) {
+        this.addCapability(capability).then(() => this.setCapability(capability, value)).catch(this.error);
+        continue;
+      }
+      const previous = this.getCapabilityValue(capability);
+      this.setCapability(capability, value);
+      const change = CHANGE_TRIGGERS[capability];
+      if (change && previous !== null && previous !== value) {
+        this.homey.flow.getDeviceTriggerCard(change[0]).trigger(this, { [change[1]]: value }).catch(this.error);
+      }
+    }
+  }
+
+  /** Notification button clicks and system state changes reported by the computer. */
+  handleEvents(events) {
+    if (!Array.isArray(events)) return;
+    const valid = events.filter(e => e && Number.isInteger(e.id)).sort((a, b) => a.id - b.id);
+    if (this.lastEventId === null) {
+      this.lastEventId = valid.length ? valid[valid.length - 1].id : 0;
+      return;
+    }
+    for (const event of valid) {
+      if (event.id <= this.lastEventId) continue;
+      this.lastEventId = event.id;
+      if (event.type === 'notification_action' && typeof event.action === 'string') {
+        this.homey.flow.getDeviceTriggerCard('notification_button')
+          .trigger(this, { button: event.action.slice(0, 64), title: String(event.title || '').slice(0, 100) })
+          .catch(this.error);
+      } else if (event.type === 'state_change' && typeof event.state === 'string') {
+        this.homey.flow.getDeviceTriggerCard('state_changed')
+          .trigger(this, { state: event.state.slice(0, 32) })
+          .catch(this.error);
+      }
+    }
+  }
+
+  /** Notification with up to 4 buttons, from a comma separated list. */
+  async notifyWithButtons({ title, message, buttons }) {
+    const actions = String(buttons || '').split(',').map(b => b.trim()).filter(Boolean).slice(0, 4)
+      .map(b => ({ action: b.slice(0, 40), title: b.slice(0, 40) }));
+    return this.sendCommand('notify', {
+      title: String(title || 'Homey').slice(0, 100),
+      message: String(message || '').slice(0, 500),
+      data: { actions },
+    });
   }
 
   setCapability(capability, value) {

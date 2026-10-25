@@ -1,6 +1,6 @@
 {
   "id": "no.kristo.macbridge",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "platforms": [
@@ -138,6 +138,143 @@
       "setable": false,
       "uiComponent": "sensor",
       "icon": "/assets/icon.svg"
+    },
+    "mac_active_app": {
+      "type": "string",
+      "title": {
+        "en": "Active app",
+        "no": "Aktiv app"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "mac_logged_user": {
+      "type": "string",
+      "title": {
+        "en": "Logged in user",
+        "no": "Innlogget bruker"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "mac_idle_minutes": {
+      "type": "number",
+      "title": {
+        "en": "Idle time",
+        "no": "Inaktiv tid"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "min"
+      },
+      "decimals": 0,
+      "min": 0,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "measure_gpu": {
+      "type": "number",
+      "title": {
+        "en": "GPU usage",
+        "no": "GPU-bruk"
+      },
+      "getable": true,
+      "setable": false,
+      "units": {
+        "en": "%"
+      },
+      "decimals": 0,
+      "min": 0,
+      "max": 100,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg"
+    },
+    "mac_locked": {
+      "type": "boolean",
+      "title": {
+        "en": "Locked",
+        "no": "Låst"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg",
+      "insightsTitleTrue": {
+        "en": "Locked",
+        "no": "Låst"
+      },
+      "insightsTitleFalse": {
+        "en": "Unlocked",
+        "no": "Ulåst"
+      }
+    },
+    "mac_display_on": {
+      "type": "boolean",
+      "title": {
+        "en": "Display on",
+        "no": "Skjerm på"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg",
+      "insightsTitleTrue": {
+        "en": "Display on",
+        "no": "Skjerm på"
+      },
+      "insightsTitleFalse": {
+        "en": "Display off",
+        "no": "Skjerm av"
+      }
+    },
+    "mac_microphone_active": {
+      "type": "boolean",
+      "title": {
+        "en": "Microphone in use",
+        "no": "Mikrofon i bruk"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg",
+      "insightsTitleTrue": {
+        "en": "Microphone on",
+        "no": "Mikrofon på"
+      },
+      "insightsTitleFalse": {
+        "en": "Microphone off",
+        "no": "Mikrofon av"
+      }
+    },
+    "mac_webcam_active": {
+      "type": "boolean",
+      "title": {
+        "en": "Webcam in use",
+        "no": "Kamera i bruk"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "uiComponent": "sensor",
+      "icon": "/assets/icon.svg",
+      "insightsTitleTrue": {
+        "en": "Webcam on",
+        "no": "Kamera på"
+      },
+      "insightsTitleFalse": {
+        "en": "Webcam off",
+        "no": "Kamera av"
+      }
     }
   },
   "flow": {
@@ -373,6 +510,60 @@
             }
           }
         ]
+      },
+      {
+        "id": "notify_buttons",
+        "title": {
+          "en": "Show notification with buttons",
+          "no": "Vis varsel med knapper"
+        },
+        "titleFormatted": {
+          "en": "Show notification [[title]]: [[message]] with buttons [[buttons]]",
+          "no": "Vis varsel [[title]]: [[message]] med knappene [[buttons]]"
+        },
+        "hint": {
+          "en": "Buttons are separated by commas (max 4). A click starts the 'A notification button was clicked' flow.",
+          "no": "Knappene skilles med komma (maks 4). Et trykk starter flowen «En varselknapp ble trykket»."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          },
+          {
+            "type": "text",
+            "name": "title",
+            "title": {
+              "en": "Title",
+              "no": "Tittel"
+            },
+            "placeholder": {
+              "en": "Home",
+              "no": "Hjem"
+            }
+          },
+          {
+            "type": "text",
+            "name": "message",
+            "title": {
+              "en": "Message",
+              "no": "Melding"
+            }
+          },
+          {
+            "type": "text",
+            "name": "buttons",
+            "title": {
+              "en": "Buttons",
+              "no": "Knapper"
+            },
+            "placeholder": {
+              "en": "Yes, No",
+              "no": "Ja, Nei"
+            }
+          }
+        ]
       }
     ],
     "triggers": [
@@ -434,6 +625,188 @@
         "title": {
           "en": "Came online",
           "no": "Kom online"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "notification_button",
+        "title": {
+          "en": "A notification button was clicked",
+          "no": "En varselknapp ble trykket"
+        },
+        "titleFormatted": {
+          "en": "A notification button was clicked",
+          "no": "En varselknapp ble trykket"
+        },
+        "tokens": [
+          {
+            "name": "button",
+            "type": "string",
+            "title": {
+              "en": "Button",
+              "no": "Knapp"
+            },
+            "example": "Ja"
+          },
+          {
+            "name": "title",
+            "type": "string",
+            "title": {
+              "en": "Notification title",
+              "no": "Varseltittel"
+            },
+            "example": "Støvsuger"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "state_changed",
+        "title": {
+          "en": "System state changed",
+          "no": "Systemtilstand endret"
+        },
+        "tokens": [
+          {
+            "name": "state",
+            "type": "string",
+            "title": {
+              "en": "State",
+              "no": "Tilstand"
+            },
+            "example": "locked"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "locked_changed",
+        "title": {
+          "en": "Was locked or unlocked",
+          "no": "Ble låst eller låst opp"
+        },
+        "tokens": [
+          {
+            "name": "locked",
+            "type": "boolean",
+            "title": {
+              "en": "Locked",
+              "no": "Låst"
+            },
+            "example": true
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "microphone_changed",
+        "title": {
+          "en": "Microphone turned on or off",
+          "no": "Mikrofon ble slått på eller av"
+        },
+        "tokens": [
+          {
+            "name": "active",
+            "type": "boolean",
+            "title": {
+              "en": "In use",
+              "no": "I bruk"
+            },
+            "example": true
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "webcam_changed",
+        "title": {
+          "en": "Webcam turned on or off",
+          "no": "Kamera ble slått på eller av"
+        },
+        "tokens": [
+          {
+            "name": "active",
+            "type": "boolean",
+            "title": {
+              "en": "In use",
+              "no": "I bruk"
+            },
+            "example": true
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "is_locked",
+        "title": {
+          "en": "Is !{{locked|unlocked}}",
+          "no": "Er !{{låst|ulåst}}"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "microphone_active",
+        "title": {
+          "en": "Microphone !{{is|is not}} in use",
+          "no": "Mikrofonen !{{er|er ikke}} i bruk"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=mac_mini|macbook_pro|windows_pc"
+          }
+        ]
+      },
+      {
+        "id": "webcam_active",
+        "title": {
+          "en": "Webcam !{{is|is not}} in use",
+          "no": "Kameraet !{{er|er ikke}} i bruk"
         },
         "args": [
           {

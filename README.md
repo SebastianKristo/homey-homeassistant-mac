@@ -15,7 +15,8 @@ Fire deler:
 - **Volum**: sett nivå, opp/ned, demp.
 - **Strøm**: vekk (Wake-on-LAN + skjerm på), dvale, skjerm av, lås skjerm, restart, slå av (restart/slå av kan skrus av i menyen).
 - **Statistikk**: CPU-bruk, minne (% og GB), disk (% og ledig GB), load, batteri og lading, temperaturstatus, oppetid/sist startet.
-- **Ekstra**: `say` (tekst-til-tale) og `notify` (macOS-varsel). Kan skrus av i menyen.
+- **Ekstra**: `say` (tekst-til-tale), `notify` (varsel, med knapper) og `play_audio` (spiller TTS fra Home Assistant). Kan skrus av i menyen.
+- **Sensorer**: se [Sensorer](#sensorer) under.
 
 Alt under gjelder både Mac og Windows-PC, med mindre noe annet står. Se [Windows-appen](#1b-windows-appen) for det som er spesielt for Windows.
 
@@ -58,7 +59,7 @@ GET  /api/status
 POST /api/command   {"command": "set_volume", "value": 40}
 ```
 
-Kommandoer (fast liste, alt annet avvises): `play_pause play pause next previous set_volume volume_up volume_down mute unmute set_mute sleep display_sleep wake wake_display lock restart shutdown say notify`.
+Kommandoer (fast liste, alt annet avvises): `play_pause play pause next previous set_volume volume_up volume_down mute unmute set_mute sleep display_sleep wake wake_display lock restart shutdown say notify play_audio stop_audio`.
 
 `notify` tar `{"title": "...", "message": "..."}` eller en streng.
 
@@ -136,6 +137,90 @@ Enheten er en høyttaler med play/pause, neste/forrige, volum, demp, spor/artist
 Flows:
 - **Handlinger**: vekk (Wake-on-LAN), dvale, skjerm av, vekk skjerm, lås, restart, slå av, play/pause, neste, forrige, si tekst, vis varsel
 - **Triggere**: CPU gikk over X %, Macen gikk offline, Macen kom online (+ alle standard kapabilitet-triggere)
+
+## Sensorer
+
+Mac- og Windows-appen rapporterer disse i tillegg til CPU/minne/disk/batteri. HA og Homey lager bare entiteter for det datamaskinen faktisk rapporterer.
+
+| Sensor | Mac | Windows | HA-entitet |
+|---|---|---|---|
+| Aktiv app (app i forgrunnen, ikke vindustittel) | ✓ | ✓ | `sensor.*_active_app` |
+| Sist aktiv / inaktiv tid | ✓ | ✓ | `sensor.*_last_active`, `sensor.*_idle_time` |
+| Innlogget bruker / brukere | ✓ | ✓ | `sensor.*_logged_in_user(s)` |
+| Låst skjerm | ✓ | ✓ | `binary_sensor.*_locked` |
+| Skjerm på/av | ✓ | ✓ | `binary_sensor.*_display_on` |
+| Siste systemendring (dvale, vekk, låst, skjerm av …) | ✓ | ✓ | `sensor.*_last_system_state_change` + hendelsen `mac_bridge_state_change` |
+| GPU-bruk | ✓ | ✓ | `sensor.*_gpu_usage` |
+| CPU-klokkefrekvens | – (finnes ikke på Apple silicon) | ✓ | `sensor.*_cpu_clock_speed` |
+| Mikrofon i bruk | ✓ | ✓ (+ hvilke apper) | `binary_sensor.*_microphone_in_use`, `sensor.*_apps_using_microphone` |
+| Kamera i bruk | ✓ | ✓ (+ hvilke apper) | `binary_sensor.*_webcam_in_use`, `sensor.*_apps_using_webcam` |
+| Lydutgang/-inngang (standardenhet) | ✓ | ✓ | `sensor.*_audio_output`, `sensor.*_audio_input` |
+| Skjermer (antall, oppløsning) | ✓ | ✓ | `sensor.*_displays` |
+| Aksentfarge | ✓ | ✓ | `sensor.*_accent_color` |
+| Skrivere | ✓ | ✓ | `sensor.*_printers` |
+| Nettverk (IP og grensesnitt) | ✓ | ✓ | `sensor.*_ip_address` |
+| Bluetooth-enheter (tilkoblede) | ✓ valgfri | ✓ valgfri (+ BLE) | `sensor.*_bluetooth_devices` |
+| Varslingsstatus (presentasjon, fullskjerm, stille tid …) | – | ✓ | `sensor.*_notification_state` |
+| Ventende Windows-oppdateringer (sjekkes hver 6. time) | – | ✓ | `sensor.*_pending_windows_updates` |
+| Kjører program X | ✓ valgfri | ✓ valgfri | `binary_sensor.*_<navn>_running` |
+| Tilstand for Windows-tjeneste X | – | ✓ valgfri | `sensor.*_service_<navn>` |
+
+«Valgfri» skrus på i menylinjen/systemstatusfeltet (**Report Bluetooth devices**, **Watched apps/programs…**, **Watched services…**). Listen over programmer og tjenester kan bare endres lokalt på datamaskinen, ikke fra nettverket.
+
+**Ikke tatt med, med vilje:** PowerShell, WMI-spørringer og egendefinerte ytelsestellere (lar hvem som helst med tokenet kjøre vilkårlige kommandoer/spørringer), skjermbilde og posisjon (personvern), vindustitler (kan inneholde e-postemner o.l.), aktivt virtuelt skrivebord (ingen offentlig API), GPU-temperatur (ingen offentlig API uten tredjepartsdrivere) og BLE-skanning (kun tilkoblede enheter rapporteres).
+
+## Varsler med knapper
+
+Hver datamaskin får en egen varseltjeneste `notify.<navn>`:
+
+```yaml
+action: notify.studio
+data:
+  title: Støvsugeren er full
+  message: Vil du pause den eller sende den hjem?
+  data:
+    actions:
+      - action: pause
+        title: Pause
+      - action: home
+        title: Send hjem
+      - action: openuri
+        title: Åpne app
+        uri: https://example.com
+```
+
+Maks 4 knapper. En knapp med `uri` åpner lenken (kun `http`/`https`) når du klikker på den. Et klikk sendes til Home Assistant som hendelsen `mac_bridge_notification_action`:
+
+```yaml
+triggers:
+  - trigger: event
+    event_type: mac_bridge_notification_action
+    event_data:
+      action: pause
+actions:
+  - action: vacuum.pause
+    target:
+      entity_id: vacuum.roborock
+```
+
+Hendelsen har også `device_id`, `name` og `title`. Den kommer fram ved neste oppdatering (standard hvert 10. sekund), eller med en gang hvis push er satt opp. I Homey: handlingen **Vis varsel med knapper** og triggeren **En varselknapp ble trykket** (med knappen som token).
+
+På Mac må du godta varsler fra MacBridge første gang. På Windows brukes vanlige Windows-varsler (toast).
+
+## Tekst-til-tale og lyd fra Home Assistant
+
+Mediaspilleren kan spille av lyd fra Home Assistant, f.eks. tekst-til-tale:
+
+```yaml
+action: tts.speak
+target:
+  entity_id: tts.google_translate_no_no
+data:
+  media_player_entity_id: media_player.studio
+  message: Middagen er klar
+```
+
+Datamaskinen laster bare ned lyd fra den samme maskinen som sendte den signerte forespørselen (Home Assistant), følger ingen omdirigeringer og godtar maks 20 MB. Home Assistant må ha en intern URL som datamaskinen når (*Innstillinger → System → Nettverk*).
 
 ## Ikoner
 
